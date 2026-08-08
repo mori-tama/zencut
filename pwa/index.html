@@ -169,6 +169,51 @@
     #destroy-button { background: linear-gradient(#f6b48c, #e05a3a); color: #4a130a; }
     #cancel-keep { width: calc(100% - 28px); margin: 10px 14px 0; background: var(--steel-face); color: var(--panel-text); }
 
+    #friend-sheet {
+      position: fixed; z-index: 9; left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom));
+      margin: auto; width: min(calc(100% - 20px), 520px); padding: 0 0 12px;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      border-radius: 2px; background: var(--steel-face);
+      box-shadow: 0 0 0 2px var(--steel-outline), 0 12px 40px rgba(4,3,27,.48);
+      transform: translateY(calc(100% + 28px)); opacity: 0; transition: .28s cubic-bezier(.2,.9,.2,1.1); pointer-events: none;
+    }
+    #friend-sheet.visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    #friend-summary { margin: 10px 14px 8px; color: #343a4e; font-size: .9rem; font-weight: 700; text-align: center; }
+    #friend-list { list-style: none; margin: 0 14px; padding: 0; display: grid; gap: 6px; max-height: 38vh; overflow-y: auto; }
+    .friend-row {
+      display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
+      padding: 6px 8px; border: 2px solid; border-color: var(--steel-lo) var(--steel-hi) var(--steel-hi) var(--steel-lo);
+      background: var(--lcd-bg); color: var(--lcd-green); font-family: var(--mono); font-weight: 700;
+    }
+    .friend-row.cancelled .friend-sub-label { text-decoration: line-through; opacity: .55; }
+    .friend-sub-label { text-align: left; font-size: .92rem; }
+    .friend-sub-price { font-size: .8rem; color: #ffe066; }
+    .friend-row.cancelled .friend-sub-price { color: #ff7d6b; }
+    .friend-cancel {
+      min-height: 34px; padding: 2px 10px; cursor: pointer; border-radius: 2px; touch-action: manipulation;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: linear-gradient(#f6b48c, #e05a3a); color: #4a130a; font-weight: 1000; font-size: .78rem;
+      box-shadow: 0 0 0 1px var(--steel-outline), 0 2px 0 rgba(10,12,24,.4);
+    }
+    .friend-cancel:disabled { filter: grayscale(.6); opacity: .7; }
+    .friend-cancel:active:not(:disabled) { transform: translateY(2px); }
+    #friend-note { margin: 8px 14px 0; color: #5c6377; font-size: .68rem; font-weight: 700; text-align: center; }
+    #friend-close {
+      width: calc(100% - 28px); margin: 10px 14px 0; min-height: 44px; cursor: pointer; border-radius: 2px;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: var(--steel-face); color: var(--panel-text); font-weight: 1000;
+      box-shadow: 0 0 0 1px var(--steel-outline), 0 3px 0 rgba(10,12,24,.4);
+    }
+    #friend-toast {
+      position: fixed; z-index: 16; top: 19%; left: 50%; transform: translateX(-50%);
+      width: max-content; max-width: 92vw; padding: 8px 14px; border-radius: 2px;
+      border: 2px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: rgba(7, 26, 12, .95); color: var(--lcd-green); font-family: var(--mono); font-weight: 700; font-size: .85rem;
+      text-shadow: 0 0 7px rgba(86,255,141,.55); box-shadow: 0 0 0 1px var(--steel-outline), 0 8px 22px rgba(0,0,0,.4);
+      opacity: 0; transition: opacity .25s; pointer-events: none;
+    }
+    #friend-toast.visible { opacity: 1; }
+
     #flash { position: fixed; z-index: 7; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle, #fffde0, #ffbf24 28%, #ff4d00 58%, transparent 73%); mix-blend-mode: screen; }
     #flash.go { animation: flash .44s ease-out; }
     #cancel-stamp {
@@ -248,6 +293,14 @@
     <button id="cancel-keep" type="button" hidden>育成を取り消す</button>
     <p id="sheet-action" hidden>📱 振りかぶって叩きつけろ！</p>
   </aside>
+  <aside id="friend-sheet" aria-live="polite">
+    <h2 class="sc-titlebar">🪐 ヒロの星 — ともだちのサブスク</h2>
+    <p id="friend-summary"></p>
+    <ul id="friend-list"></ul>
+    <p id="friend-note">※おふざけ機能: 実際には解約されません。たぶん。</p>
+    <button id="friend-close" type="button">そっと閉じる</button>
+  </aside>
+  <div id="friend-toast" aria-live="polite"></div>
   <div id="flash"></div>
   <div id="cancel-stamp" aria-hidden="true">解約!</div>
 
@@ -337,7 +390,7 @@
         { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [.85, -4.95] }
       ];
       const knownGenres = new Set(districts.map(district => district.genre));
-      const otherDistrictCenter = [6, -6];
+      const otherDistrictCenter = [26, -16];
       const scanSlotOffsets = [
         [-2.1, -1.25], [-.7, -1.25], [.7, -1.25], [2.1, -1.25],
         [-2.1, 1.05], [-.7, 1.05], [.7, 1.05], [2.1, 1.05]
@@ -447,6 +500,28 @@
           scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
         }
       }
+
+      // 街区を1つの都市に固めず、惑星全体に散らす(モック座標は街区ごと移動、スキャン配置は新centerを自動参照)
+      const districtSpread = {
+        'AI': [0, 4], 'ゲーム': [13, 6], 'からだ': [-12, 8], '通信': [3, -15], 'ほけん': [-15, -6],
+        '学び': [17, -8], 'クラウド': [-6, 19], 'おかいもの': [2, 24], 'ごはん': [-14, 16],
+        'ニュース': [22, 7], 'マンガ': [-16, -22], '動画': [12, -24], '音楽': [-28, -5]
+      };
+      const parkSpread = { 'みどり公園': [-9, 28], 'ひろば公園': [20, 20] };
+      districts.forEach(district => {
+        const to = districtSpread[district.genre];
+        if (!to) return;
+        const from = district.center;
+        mockSubscriptions.forEach(sub => {
+          if (sub.genre !== district.genre) return;
+          sub.position[0] += to[0] - from[0];
+          sub.position[1] += to[1] - from[1];
+        });
+        district.center = to;
+      });
+      parkBlocks.forEach(park => {
+        if (parkSpread[park.name]) park.center = parkSpread[park.name];
+      });
 
       initializeStartupData();
       // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす(モック/スキャンどちらの配置にも適用)
@@ -627,31 +702,34 @@
         createDistrictLabel(block, monthly, heatStyle);
       });
 
-      // 道路: 相手の新レイアウト(縦4本・横2本)を、短いセグメントで蛇行させながら球面に沿わせる
+      // 道路: 街区ごとに1本、蛇行する目抜き通りが通り抜ける
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
-      const roadSegmentX = new THREE.BoxGeometry(.82, .07, .44);
-      const roadSegmentZ = new THREE.BoxGeometry(.44, .07, .82);
-      const ROAD_STEP = .62;
-      const roadPaths = [
-        { alongX: false, length: 19, cross: -9, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 19, cross: -3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 19, cross: 3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 19, cross: 9, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
-        { alongX: true, length: 31, cross: -3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
-        { alongX: true, length: 31, cross: 3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 }
-      ];
-      const roadLateral = (road, along) => road.cross + Math.sin(along * road.freq + road.phase) * road.amp;
-      roadPaths.forEach(road => {
-        const count = Math.ceil(road.length / ROAD_STEP);
+      const roadSegmentGeometry = new THREE.BoxGeometry(.8, .07, .42);
+      const ROAD_STEP = .6;
+      function buildStreet(cx, cz, angle, length) {
+        const phase = Math.random() * 6.3;
+        const amp = .35 + Math.random() * .3;
+        const freq = .38 + Math.random() * .2;
+        const count = Math.ceil(length / ROAD_STEP);
+        const pointAt = t => {
+          const lateral = Math.sin(t * freq + phase) * amp;
+          return [
+            cx + Math.cos(angle) * t - Math.sin(angle) * lateral,
+            cz + Math.sin(angle) * t + Math.cos(angle) * lateral
+          ];
+        };
         for (let i = 0; i < count; i += 1) {
-          const along = -road.length / 2 + (i + .5) * road.length / count;
-          const lateral = roadLateral(road, along);
-          const yaw = Math.atan2(roadLateral(road, along + ROAD_STEP) - lateral, ROAD_STEP);
-          const mesh = new THREE.Mesh(road.alongX ? roadSegmentX : roadSegmentZ, roadMaterial);
+          const t = -length / 2 + (i + .5) * length / count;
+          const [x, z] = pointAt(t);
+          const [nx, nz] = pointAt(t + ROAD_STEP);
+          const mesh = new THREE.Mesh(roadSegmentGeometry, roadMaterial);
           mesh.receiveShadow = true;
-          placeOnPlanet(mesh, road.alongX ? along : lateral, road.alongX ? lateral : along, .02);
-          mesh.rotateY(road.alongX ? -yaw : yaw);
+          placeOnPlanet(mesh, x, z, .02);
+          mesh.rotateY(-Math.atan2(nz - z, nx - x));
         }
+      }
+      layoutBlocks.forEach(block => {
+        buildStreet(block.center[0], block.center[1], Math.random() * Math.PI, block.size[0] + 3.5);
       });
 
       // 緑化: 島の外周に街路樹を植える
@@ -661,12 +739,7 @@
         new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 }),
         new THREE.MeshStandardMaterial({ color: 0x27793a, roughness: .85 })
       ];
-      // 森: 街の外周〜惑星の裏側までと、街なかの隙間にも木を散らして雑多さを出す
-      const nearRoad = (x, z) => roadPaths.some(road => {
-        const along = road.alongX ? x : z;
-        if (Math.abs(along) > road.length / 2 + .4) return false;
-        return Math.abs((road.alongX ? z : x) - roadLateral(road, along)) < .68;
-      });
+      // 森: 惑星全体に均一散布(街区・ランドマーク・道路周辺は植えない)
       const inDistrict = (x, z) => districts.some(district =>
         Math.abs(x - district.center[0]) < district.size[0] / 2 + .2 &&
         Math.abs(z - district.center[1]) < district.size[1] / 2 + .2
@@ -682,7 +755,7 @@
       ];
       const inFeature = (x, z) => featureZones.some(zone => Math.hypot(x - zone.x, z - zone.z) < zone.r);
       function plantTree(x, z, variant) {
-        if (inFeature(x, z)) return;
+        if (inFeature(x, z) || inDistrict(x, z)) return;
         const tree = new THREE.Group();
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
         trunk.position.y = .15;
@@ -694,18 +767,11 @@
         tree.scale.setScalar(.75 + Math.random() * .55);
         placeOnPlanet(tree, x, z, 0);
       }
-      for (let i = 0; i < 170; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = i < 50 ? 19 + Math.random() * 2.8 : 22 + Math.random() * (Math.PI * PLANET_RADIUS - 22.5);
-        plantTree(Math.cos(angle) * radius, Math.sin(angle) * radius, i);
-      }
-      // 街なかの空き地にもまばらに
-      for (let i = 0, planted = 0; i < 420 && planted < 40; i += 1) {
-        const x = (Math.random() - .5) * 31;
-        const z = (Math.random() - .5) * 20;
-        if (inDistrict(x, z) || nearRoad(x, z)) continue;
-        plantTree(x, z, i);
-        planted += 1;
+      for (let i = 0; i < 230; i += 1) {
+        const azimuth = Math.random() * Math.PI * 2;
+        const polar = Math.acos(1 - 2 * Math.random());
+        const radius = Math.min(polar * PLANET_RADIUS, Math.PI * PLANET_RADIUS - .5);
+        plantTree(Math.cos(azimuth) * radius, Math.sin(azimuth) * radius, i);
       }
 
       // ---- 惑星のランドマーク: 回すと出会える風景たち ----
@@ -1118,13 +1184,128 @@
         }
       }
 
-      function addSpire(group, y, cx = 0) {
-        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.02, .035, .5, 6), antennaMaterial);
-        antenna.position.set(cx, y + .25, 0);
-        group.add(antenna);
-        const tip = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), antennaTipMaterial);
-        tip.position.set(cx, y + .52, 0);
-        group.add(tip);
+      // ---- ジャンル別テーマ装飾 ----
+      const crownDark = new THREE.MeshStandardMaterial({ color: 0x2b2e3a, roughness: .5 });
+      const crownWhite = new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: .55 });
+      const crownRed = new THREE.MeshStandardMaterial({ color: 0xd8544a, roughness: .6 });
+      const crownYellow = new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0x8a5a10, emissiveIntensity: .4, roughness: .5 });
+      const crownCyan = new THREE.MeshStandardMaterial({ color: 0x9fe8ff, emissive: 0x2ba8d8, emissiveIntensity: .9, roughness: .4 });
+      const bowlMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: .55, side: THREE.DoubleSide });
+      const dishMaterial = new THREE.MeshStandardMaterial({ color: 0xd6dae2, roughness: .5, metalness: .3, side: THREE.DoubleSide });
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0xe8c39a, roughness: .8 });
+      const mastMaterial = new THREE.MeshStandardMaterial({ color: 0xd6dae2, roughness: .5, metalness: .35 });
+      const villaRoofMaterial = new THREE.MeshStandardMaterial({ color: 0xa8523d, roughness: .78 });
+      const bushMaterial = new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 });
+
+      // 屋上のジャンルオブジェ: 音楽なら音符、からだならバーベル、AIなら光る球…
+      function addGenreCrown(group, sub, rand, topY, cx = 0) {
+        const crown = new THREE.Group();
+        crown.position.set(cx, topY, 0);
+        group.add(crown);
+        const genre = getDistrictGenre(sub);
+        if (genre === '音楽') {
+          const head = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), crownDark);
+          head.scale.set(1, .72, 1); head.position.set(-.1, .16, 0); head.rotation.z = .35;
+          crown.add(head);
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(.026, .026, .54, 6), crownDark);
+          stem.position.set(.04, .4, 0); crown.add(stem);
+          const flag = new THREE.Mesh(new THREE.BoxGeometry(.2, .12, .04), crownDark);
+          flag.position.set(.15, .6, 0); crown.add(flag);
+        } else if (genre === 'からだ') {
+          const bar = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .9, 8), mastMaterial);
+          bar.rotation.z = Math.PI / 2; bar.position.y = .2; crown.add(bar);
+          [-1, 1].forEach(side => {
+            const plate = new THREE.Mesh(new THREE.SphereGeometry(.11, 8, 6), crownDark);
+            plate.position.set(side * .3, .2, 0); crown.add(plate);
+            const outerPlate = new THREE.Mesh(new THREE.SphereGeometry(.075, 8, 6), crownRed);
+            outerPlate.position.set(side * .42, .2, 0); crown.add(outerPlate);
+          });
+        } else if (genre === '動画') {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .3, 6), crownDark);
+          pole.position.y = .14; crown.add(pole);
+          const canvas = document.createElement('canvas');
+          canvas.width = 64; canvas.height = 40;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#20242f'; ctx.fillRect(0, 0, 64, 40);
+          ctx.fillStyle = '#f2f5fa'; ctx.fillRect(3, 3, 58, 34);
+          ctx.fillStyle = '#f28c3c';
+          ctx.beginPath(); ctx.moveTo(26, 11); ctx.lineTo(26, 29); ctx.lineTo(42, 20); ctx.closePath(); ctx.fill();
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          const screen = new THREE.Mesh(new THREE.PlaneGeometry(.64, .4), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+          screen.position.y = .48; screen.rotation.y = rand() * .6 - .3; crown.add(screen);
+        } else if (genre === 'ゲーム') {
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .14, 10), crownDark);
+          base.position.y = .1; crown.add(base);
+          const stick = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .32, 6), mastMaterial);
+          stick.position.set(-.04, .3, 0); stick.rotation.z = .18; crown.add(stick);
+          const ball = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), crownRed);
+          ball.position.set(-.09, .48, 0); crown.add(ball);
+          const button = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), crownYellow);
+          button.position.set(.13, .18, .05); crown.add(button);
+        } else if (genre === 'クラウド') {
+          [[-.16, .18, 0, .15], [.02, .24, .04, .19], [.19, .17, -.02, .13]].forEach(([px, py, pz, radius]) => {
+            const puff = new THREE.Mesh(new THREE.SphereGeometry(radius, 10, 8), crownWhite);
+            puff.position.set(px, py, pz); crown.add(puff);
+          });
+        } else if (genre === 'おかいもの') {
+          const gift = new THREE.Mesh(new THREE.BoxGeometry(.3, .26, .3), crownRed);
+          gift.position.y = .17; crown.add(gift);
+          const ribbonA = new THREE.Mesh(new THREE.BoxGeometry(.05, .28, .32), crownYellow);
+          ribbonA.position.y = .17; crown.add(ribbonA);
+          const ribbonB = new THREE.Mesh(new THREE.BoxGeometry(.32, .28, .05), crownYellow);
+          ribbonB.position.y = .17; crown.add(ribbonB);
+          const knot = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), crownYellow);
+          knot.position.y = .33; crown.add(knot);
+        } else if (genre === 'ごはん') {
+          const bowl = new THREE.Mesh(new THREE.SphereGeometry(.24, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), bowlMaterial);
+          bowl.rotation.x = Math.PI; bowl.position.y = .28; crown.add(bowl);
+          const rice = new THREE.Mesh(new THREE.SphereGeometry(.18, 10, 8), crownWhite);
+          rice.scale.set(1, .6, 1); rice.position.y = .32; crown.add(rice);
+          const steam = new THREE.Mesh(new THREE.SphereGeometry(.05, 6, 5), crownWhite);
+          steam.position.set(.05, .48, 0); crown.add(steam);
+          const steam2 = steam.clone(); steam2.position.set(-.07, .54, .03); crown.add(steam2);
+        } else if (genre === 'ニュース') {
+          const stalk = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .3, 6), crownDark);
+          stalk.position.y = .14; crown.add(stalk);
+          const dish = new THREE.Mesh(new THREE.SphereGeometry(.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), dishMaterial);
+          dish.position.y = .32; dish.rotation.set(2.2, 0, .4); crown.add(dish);
+          const feed = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .2, 5), mastMaterial);
+          feed.position.set(.06, .38, .06); feed.rotation.set(.6, 0, -.4); crown.add(feed);
+        } else if (genre === 'ほけん') {
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .4, 6), mastMaterial);
+          stem.position.y = .2; crown.add(stem);
+          const canopy = new THREE.Mesh(new THREE.ConeGeometry(.32, .24, 10), crownRed);
+          canopy.position.y = .4; crown.add(canopy);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(.032, 6, 5), crownYellow);
+          tip.position.y = .55; crown.add(tip);
+        } else if (genre === 'AI') {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .24, 6), crownDark);
+          pole.position.y = .1; crown.add(pole);
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(.15, 12, 10), crownCyan);
+          orb.position.y = .34; crown.add(orb);
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(.23, .026, 6, 16), crownYellow);
+          ring.position.y = .34; ring.rotation.x = 1.15; crown.add(ring);
+        } else if (genre === 'マンガ') {
+          const canvas = document.createElement('canvas');
+          canvas.width = 96; canvas.height = 96;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.ellipse(48, 40, 40, 30, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(34, 62); ctx.lineTo(26, 86); ctx.lineTo(50, 66); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#d8293f'; ctx.font = '900 44px sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('！', 48, 42);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          const bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+          bubble.scale.set(.6, .6, 1);
+          bubble.position.y = .38; crown.add(bubble);
+        } else {
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.02, .035, .5, 6), antennaMaterial);
+          antenna.position.y = .25; crown.add(antenna);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), antennaTipMaterial);
+          tip.position.y = .52; crown.add(tip);
+        }
       }
 
       function createBuilding(sub, index) {
@@ -1141,17 +1322,77 @@
         let body;
 
         if (!sub.contracted) {
-          // 未契約: ひさしとドアのついた小さな商店
-          body = addTier(group, sub, rand, .98, .84, .8, .06);
-          addLedge(group, 1.06, .92, .9, ledgeColor);
-          const awning = new THREE.Mesh(awningGeometry, new THREE.MeshStandardMaterial({ color: awningColors[index % awningColors.length], roughness: .8 }));
-          awning.position.set(0, .56, .48);
-          awning.rotation.x = .35;
-          group.add(awning);
-          const door = new THREE.Mesh(doorGeometry, new THREE.MeshStandardMaterial({ color: 0x3a3f4e, roughness: .7 }));
-          door.position.set(-.24, .21, .43);
-          group.add(door);
-          addRoofProps(group, rand, .8, .66, .95);
+          if (index % 2 === 0) {
+            // 未契約その1: ひさしとドアのついた小さな商店
+            body = addTier(group, sub, rand, .98, .84, .8, .06);
+            addLedge(group, 1.06, .92, .9, ledgeColor);
+            const awning = new THREE.Mesh(awningGeometry, new THREE.MeshStandardMaterial({ color: awningColors[index % awningColors.length], roughness: .8 }));
+            awning.position.set(0, .56, .48);
+            awning.rotation.x = .35;
+            group.add(awning);
+            const door = new THREE.Mesh(doorGeometry, new THREE.MeshStandardMaterial({ color: 0x3a3f4e, roughness: .7 }));
+            door.position.set(-.24, .21, .43);
+            group.add(door);
+            addRoofProps(group, rand, .8, .66, .95);
+          } else {
+            // 未契約その2: 三角屋根の別荘と庭木
+            body = addTier(group, sub, rand, .82, .68, .52, .06);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(.64, .42, 4), villaRoofMaterial);
+            roof.position.y = .8;
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            group.add(roof);
+            const chimney = new THREE.Mesh(new THREE.BoxGeometry(.1, .22, .1), crownDark);
+            chimney.position.set(.22, .84, -.12);
+            group.add(chimney);
+            const bush = new THREE.Mesh(new THREE.SphereGeometry(.14, 8, 6), bushMaterial);
+            bush.position.set(.5, .12, .32);
+            group.add(bush);
+            const bush2 = new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), bushMaterial);
+            bush2.position.set(-.48, .09, .28);
+            group.add(bush2);
+          }
+        } else if (getDistrictGenre(sub) === '学び') {
+          // 学び街: 鉛筆タワー(六角軸+木部+芯)
+          const bodyHeight = Math.max(1, height - .55);
+          const shaft = new THREE.Mesh(
+            new THREE.CylinderGeometry(.52, .52, bodyHeight, 6),
+            new THREE.MeshStandardMaterial({ color: sub.color, roughness: .62 })
+          );
+          shaft.position.y = bodyHeight / 2 + .08;
+          shaft.castShadow = true;
+          shaft.userData.building = group;
+          group.add(shaft);
+          clickableMeshes.push(shaft);
+          body = shaft;
+          const wood = new THREE.Mesh(new THREE.CylinderGeometry(.03, .52, .5, 6), woodMaterial);
+          wood.position.y = bodyHeight + .08 + .25;
+          group.add(wood);
+          const lead = new THREE.Mesh(new THREE.ConeGeometry(.13, .28, 6), crownDark);
+          lead.position.y = bodyHeight + .08 + .56;
+          group.add(lead);
+        } else if (getDistrictGenre(sub) === '通信') {
+          // 通信街: ビルの上に電波塔が伸びる
+          const bodyHeight = Math.max(1, height - .55);
+          const baseHeight = Math.max(.7, bodyHeight * .4);
+          body = addTier(group, sub, rand, 1.05, .95, baseHeight, .08);
+          addLedge(group, 1.14, 1.03, baseHeight + .11, ledgeColor);
+          const mastHeight = bodyHeight - baseHeight + .5;
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(.05, .17, mastHeight, 6), mastMaterial);
+          mast.position.y = baseHeight + .14 + mastHeight / 2;
+          mast.userData.building = group;
+          group.add(mast);
+          clickableMeshes.push(mast);
+          [.6, .85].forEach(fraction => {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(.16 + (1 - fraction) * .3, .024, 6, 14), crownCyan);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = baseHeight + .14 + mastHeight * fraction;
+            group.add(ring);
+          });
+          const beacon = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), crownRed);
+          beacon.position.y = baseHeight + .14 + mastHeight + .05;
+          group.add(beacon);
+          addRoofProps(group, rand, .9, .8, baseHeight + .12);
         } else {
           const bodyHeight = Math.max(1, height - .55);
           const style = Math.floor(rand() * 3);
@@ -1170,7 +1411,7 @@
               y += .07;
             });
             addRoofProps(group, rand, .64, .56, y + .03);
-            if (rand() < .7) addSpire(group, y + .03);
+            addGenreCrown(group, sub, rand, y + .03);
           } else if (style === 1) {
             // クラウンタワー: 直胴の上に張り出した頂部と尖塔
             const shaftHeight = bodyHeight * .8;
@@ -1181,7 +1422,7 @@
             const crownTop = shaftHeight + .15 + crownHeight;
             addLedge(group, 1.32, 1.18, crownTop + .02, ledgeColor);
             addRoofProps(group, rand, 1, .9, crownTop + .05);
-            addSpire(group, crownTop + .05);
+            addGenreCrown(group, sub, rand, crownTop + .05);
           } else {
             // ツイン棟: 高さ違いの2棟が寄り添う複合ビル
             const annexHeight = bodyHeight * (.52 + rand() * .2);
@@ -1192,7 +1433,7 @@
             annex.position.set(.4, annexHeight / 2 + .08, -.04);
             addLedge(group, .72, .88, annexHeight + .11, ledgeColor, .4, -.04);
             addRoofProps(group, rand, .55, .7, annexHeight + .14, .4, -.04);
-            if (rand() < .8) addSpire(group, bodyHeight + .13, -.26);
+            addGenreCrown(group, sub, rand, bodyHeight + .13, -.26);
           }
         }
 
@@ -1490,6 +1731,200 @@
       const savingsTreeBaseQuaternion = placeOnPlanet(savingsTree, 0, 10.1, 0);
       rebuildSavingsTree(0);
 
+      // ---- ともだちの星: 地平線のちょうど向こう側に、登録してくれた友達の惑星が覗いている ----
+      // 位置はデフォルトカメラから見て自分の惑星のシルエット上端に接するよう計算した固定座標。
+      // 遠景の霧で消えないよう、この星のマテリアルはfogを切って淡い色にしてある。
+      const FRIEND_PLANET_RADIUS = 5;
+      const friend = {
+        name: 'ヒロ', // 登録済みの友達(モックデータ)
+        subs: [
+          { icon: '🎬', name: 'MOOVA', price: 1190, color: 0xf05252 },
+          { icon: '🎵', name: 'BEATLY', price: 980, color: 0x3299db },
+          { icon: '💎', name: 'GEMPOP', price: 1280, color: 0xa54cce },
+          { icon: '🤖', name: 'CHATTY', price: 3900, color: 0xe36568 },
+          { icon: '📚', name: 'COMICON', price: 980, color: 0xf06b8d }
+        ].map(sub => ({ ...sub, cancelled: false, mesh: null }))
+      };
+      const friendPlanet = new THREE.Group();
+      friendPlanet.position.set(-22, -25.5, -26);
+      // 画面上方向(カメラから見たシルエットの外側)を友達の星の「上」にして、覗いた部分に街が見えるようにする
+      const friendUp = new THREE.Vector3(-.5554, .5024, -.6626).normalize();
+      const friendBaseQuaternion = new THREE.Quaternion().setFromUnitVectors(PLANET_UP, friendUp);
+      friendPlanet.quaternion.copy(friendBaseQuaternion);
+      scene.add(friendPlanet);
+      const friendGlobe = new THREE.Mesh(
+        new THREE.SphereGeometry(FRIEND_PLANET_RADIUS, 36, 24),
+        new THREE.MeshStandardMaterial({ color: 0x7cbfa4, roughness: .85, fog: false })
+      );
+      friendPlanet.add(friendGlobe);
+      // タップ判定用の少し大きい不可視球
+      const friendHitSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(FRIEND_PLANET_RADIUS + 1.3, 12, 8),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      friendPlanet.add(friendHitSphere);
+      function placeOnFriendPlanet(object, tilt, azimuth, lift = 0) {
+        const normal = new THREE.Vector3(
+          Math.sin(tilt) * Math.cos(azimuth),
+          Math.cos(tilt),
+          Math.sin(tilt) * Math.sin(azimuth)
+        );
+        object.quaternion.setFromUnitVectors(PLANET_UP, normal);
+        object.position.copy(normal).multiplyScalar(FRIEND_PLANET_RADIUS + lift);
+        friendPlanet.add(object);
+      }
+      friend.subs.forEach((sub, index) => {
+        const height = .9 + sub.price / 3900 * 1.7;
+        const mini = new THREE.Group();
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(.85, height, .8),
+          new THREE.MeshStandardMaterial({ color: sub.color, roughness: .6, fog: false })
+        );
+        body.position.y = height / 2;
+        mini.add(body);
+        const roof = new THREE.Mesh(
+          new THREE.BoxGeometry(.6, .2, .55),
+          new THREE.MeshStandardMaterial({ color: 0x413267, roughness: .6, fog: false })
+        );
+        roof.position.y = height + .1;
+        mini.add(roof);
+        placeOnFriendPlanet(mini, .38 + (index % 2) * .32, index / friend.subs.length * Math.PI * 2, -.02);
+        sub.mesh = mini;
+      });
+      const friendLeafMaterial = new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85, fog: false });
+      for (let i = 0; i < 6; i += 1) {
+        const tree = new THREE.Group();
+        const leaf = new THREE.Mesh(new THREE.ConeGeometry(.24, .6, 6), friendLeafMaterial);
+        leaf.position.y = .3;
+        tree.add(leaf);
+        placeOnFriendPlanet(tree, .55 + Math.random() * .65, Math.random() * Math.PI * 2, 0);
+      }
+      function createFriendSprite(draw, width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        draw(canvas.getContext('2d'));
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, fog: false, depthTest: true }));
+      }
+      const friendLabel = createFriendSprite(ctx => {
+        ctx.fillStyle = 'rgba(32, 22, 84, .92)'; ctx.fillRect(0, 0, 640, 150);
+        ctx.strokeStyle = '#8fd0ff'; ctx.lineWidth = 9; ctx.strokeRect(5, 5, 630, 140);
+        ctx.fillStyle = '#fff8ed'; ctx.font = '900 56px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`🪐 ${friend.name}の星`, 320, 76);
+      }, 640, 150);
+      friendLabel.scale.set(7.4, 1.75, 1);
+      friendLabel.position.y = FRIEND_PLANET_RADIUS + 2.6;
+      friendPlanet.add(friendLabel);
+      // 勝手に解約されたとき、星のまわりを💢が回って怒りを表す
+      const friendAngryMark = createFriendSprite(ctx => {
+        ctx.font = '104px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('💢', 64, 70);
+      }, 128, 128);
+      friendAngryMark.scale.set(3.2, 3.2, 1);
+      friendAngryMark.position.set(3.1, FRIEND_PLANET_RADIUS - .6, 0);
+      friendAngryMark.visible = false;
+      friendPlanet.add(friendAngryMark);
+      let friendShake = 0;
+      let friendAngryUntil = 0;
+
+      const friendSheet = document.querySelector('#friend-sheet');
+      const friendSummary = document.querySelector('#friend-summary');
+      const friendList = document.querySelector('#friend-list');
+      const friendToast = document.querySelector('#friend-toast');
+      const friendCloseButton = document.querySelector('#friend-close');
+      let friendToastTimer = null;
+
+      function showFriendToast(message) {
+        friendToast.textContent = message;
+        friendToast.classList.add('visible');
+        clearTimeout(friendToastTimer);
+        friendToastTimer = setTimeout(() => friendToast.classList.remove('visible'), 2600);
+      }
+
+      function renderFriendSheet() {
+        const remaining = friend.subs.filter(sub => !sub.cancelled);
+        friendSummary.textContent = remaining.length > 0
+          ? `${friend.name}は 月額 ${formatYen(remaining.reduce((sum, sub) => sum + sub.price, 0))} 払っています`
+          : `${friend.name}の星は更地になりました…📞鬼電が鳴っています`;
+        friendList.innerHTML = '';
+        friend.subs.forEach((sub, index) => {
+          const row = document.createElement('li');
+          row.className = sub.cancelled ? 'friend-row cancelled' : 'friend-row';
+          const label = document.createElement('span');
+          label.className = 'friend-sub-label';
+          label.textContent = `${sub.icon} ${sub.name}`;
+          const price = document.createElement('span');
+          price.className = 'friend-sub-price';
+          price.textContent = sub.cancelled ? '解約済み' : `${formatYen(sub.price)}/月`;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'friend-cancel';
+          button.textContent = sub.cancelled ? '🔥' : '💣 勝手に解約';
+          button.disabled = sub.cancelled;
+          button.addEventListener('click', () => cancelFriendSub(index));
+          row.append(label, price, button);
+          friendList.appendChild(row);
+        });
+      }
+
+      function openFriendSheet() {
+        clearSelection();
+        renderFriendSheet();
+        friendSheet.classList.add('visible');
+        playSound('item-get1', .5);
+      }
+
+      function closeFriendSheet() {
+        friendSheet.classList.remove('visible');
+      }
+      friendCloseButton.addEventListener('click', closeFriendSheet);
+
+      function explodeFriendBuilding(sub) {
+        if (!sub.mesh || !sub.mesh.visible) return;
+        const origin = new THREE.Vector3();
+        sub.mesh.getWorldPosition(origin);
+        const debrisMaterial = new THREE.MeshStandardMaterial({ color: sub.color, roughness: .55, fog: false });
+        for (let i = 0; i < 16; i += 1) {
+          const size = .14 + Math.random() * .2;
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), debrisMaterial);
+          piece.position.copy(origin);
+          scene.add(piece);
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.5 + Math.random() * 3;
+          particles.push({ mesh: piece, velocity: new THREE.Vector3(Math.cos(angle) * speed, 2.5 + Math.random() * 4, Math.sin(angle) * speed), spin: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9), life: .9 + Math.random() * .3, coin: false });
+        }
+        const burst = new THREE.PointLight(0xff9b21, 40, 9);
+        burst.position.copy(origin);
+        scene.add(burst);
+        particles.push({ light: burst, life: .4 });
+        sub.mesh.visible = false;
+      }
+
+      function friendReaction() {
+        const lines = [
+          `😈 ${friend.name}に解約通知が届きました…`,
+          `💢 ${friend.name}が異変に気づいたようです`,
+          `📞 ${friend.name}から着信があります(出ないでおきましょう)`,
+          `🚀 ${friend.name}がこちらの星に向かっています!!`,
+          `🔥 ${friend.name}との友情が解約されました`
+        ];
+        return lines[Math.min(friend.subs.filter(sub => sub.cancelled).length - 1, lines.length - 1)];
+      }
+
+      function cancelFriendSub(index) {
+        const sub = friend.subs[index];
+        if (sub.cancelled) return;
+        sub.cancelled = true;
+        explodeFriendBuilding(sub);
+        friendShake = 1;
+        friendAngryUntil = performance.now() + 2600;
+        playSound('big-explosion1', .55);
+        setTimeout(showCancelStamp, 250);
+        showFriendToast(friendReaction());
+        renderFriendSheet();
+      }
+
       const clampCameraDistance = value => Math.max(24, Math.min(70, value));
 
       // 選択したビルが惑星の頂上(画面中央)に来るよう惑星ごと回す
@@ -1630,8 +2065,19 @@
           !item.object.userData.building.userData.destroyed &&
           (!globeHit || item.distance < globeHit.distance + .5)
         );
-        if (hit) selectBuilding(hit.object.userData.building);
-        else clearSelection();
+        if (hit) {
+          closeFriendSheet();
+          selectBuilding(hit.object.userData.building);
+          return;
+        }
+        // 地平線の向こうの友達の星をタップしたらサブスク一覧を開く
+        const friendHit = raycaster.intersectObject(friendHitSphere, false)[0];
+        if (friendHit && (!globeHit || friendHit.distance < globeHit.distance)) {
+          openFriendSheet();
+          return;
+        }
+        clearSelection();
+        closeFriendSheet();
       }
       renderer.domElement.addEventListener('pointerup', pick);
       renderer.domElement.addEventListener('dblclick', event => {
@@ -1887,10 +2333,15 @@
       startButton.addEventListener('click', startExperience);
 
       const clock = new THREE.Clock();
+      const openingSpin = new THREE.Quaternion();
       function render(now) {
         requestAnimationFrame(render);
         const dt = Math.min(clock.getDelta(), .035);
         const time = now * .001;
+        if (openingRunning) {
+          openingSpin.setFromAxisAngle(PLANET_UP, dt * .38);
+          planet.quaternion.premultiply(openingSpin);
+        }
         if (viewTween) {
           const progress = Math.min(1, (performance.now() - viewTween.startedAt) / viewTween.duration);
           const eased = progress < .5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
@@ -1940,6 +2391,19 @@
           const pulse = 1 + Math.sin(time * 9 + phase) * .18;
           mark.scale.set(.42 * pulse, .42 * pulse, 1);
         });
+        // 友達の星: ゆっくり自転し、勝手に解約されるとプルプル怒る
+        friendPlanet.quaternion.copy(friendBaseQuaternion);
+        friendPlanet.rotateY(time * .12);
+        if (friendShake > .01) {
+          friendPlanet.rotateZ((Math.random() - .5) * friendShake * .12);
+          friendPlanet.rotateX((Math.random() - .5) * friendShake * .12);
+          friendShake *= .9;
+        }
+        friendAngryMark.visible = performance.now() < friendAngryUntil;
+        if (friendAngryMark.visible) {
+          const angryPulse = 1 + Math.sin(time * 10) * .22;
+          friendAngryMark.scale.set(3.2 * angryPulse, 3.2 * angryPulse, 1);
+        }
         for (let i = particles.length - 1; i >= 0; i -= 1) {
           const particle = particles[i];
           particle.life -= dt;
