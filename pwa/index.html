@@ -427,6 +427,7 @@
       }
 
       function readScanData() {
+        return null; // ステージ裁定(8/8): 本編は常に完全デモ。実データはscan.htmlのチェックリストだけで見せる
         try {
           const raw = localStorage.getItem('zencut-scan');
           if (raw == null) return null;
