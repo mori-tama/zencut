@@ -1426,8 +1426,7 @@
         createExplosion(building);
         cameraShake = 1;
         playSound('big-explosion1');
-        setTimeout(() => playSound('building-collapse-little1', .48), 300);
-        setTimeout(showCancelStamp, 400);
+        setTimeout(showCancelStamp, 450);
         flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
         building.visible = false;
         sheet.classList.remove('visible');
@@ -1438,8 +1437,8 @@
         clearSelection();
         updateDuplicateBadges();
         updateContractHeader();
-        setTimeout(() => playSound('money-drop1', .9), 270);
-        setTimeout(() => playSound('amount-display1', .78), 680);
+        setTimeout(() => playSound('money-drop1', .8), 750);
+        setTimeout(() => playSound('amount-display1', .7), 1100);
         checkAllDecided();
       }
 
