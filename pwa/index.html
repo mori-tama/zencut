@@ -236,7 +236,7 @@
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
-  <div id="hint">ビルをタップして選択 <span id="motion-status">・PCはダブルクリックで爆破</span></div>
+  <div id="hint">ドラッグで惑星を回転・ビルをタップして選択 <span id="motion-status">・PCはダブルクリックで爆破</span></div>
 
   <aside id="sheet" aria-live="polite">
     <h2 id="sheet-title"></h2>
@@ -285,38 +285,38 @@
         { genre: 'おかいもの', name: 'おかいもの街', center: [5.4, 0], size: [4.7, 4.6] }
       ];
       const subscriptions = [
-        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.75, 5] },
-        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.4, 5] },
-        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-4.05, 5] },
-        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.1, 6.4] },
-        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.7, 6.4] },
-        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -6.4] },
-        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -6.4] },
-        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -6.4] },
-        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -5] },
-        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -5] },
-        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -5] },
-        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.7, -6.4] },
-        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [6.1, -6.4] },
-        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.7, -5] },
-        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [6.1, -5] },
-        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-1.35, 5.3] },
-        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [0, 5.3] },
-        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [1.35, 5.3] },
-        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-6.75, -.4] },
-        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-5.4, -.4] },
-        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-4.05, -.4] },
-        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [4.05, 5.3] },
-        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.4, 5.3] },
-        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.75, 5.3] },
-        { name: 'COMICON', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-6.75, -6.4] },
-        { name: 'INKPOP', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.4, -6.4] },
-        { name: 'TOONBOX', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.05, -6.4] },
-        { name: 'DRIVEBOX', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-1.35, -.4] },
-        { name: 'SYNCLY', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [0, -.4] },
-        { name: 'VAULTIE', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -.4] },
-        { name: 'PRIMEGO', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
-        { name: 'SHOPPLE', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
+        { name: 'ChatGPT', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.75, 5] },
+        { name: 'Claude', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.4, 5] },
+        { name: 'Midjourney', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-4.05, 5] },
+        { name: 'Gemini', icon: '✨', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.1, 6.4] },
+        { name: 'Copilot', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.7, 6.4] },
+        { name: 'Netflix', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -6.4] },
+        { name: 'Disney+', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -6.4] },
+        { name: 'Prime Video', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -6.4] },
+        { name: 'U-NEXT', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -5] },
+        { name: 'dアニメストア', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -5] },
+        { name: 'ABEMA', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -5] },
+        { name: 'Spotify', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.7, -6.4] },
+        { name: 'Apple Music', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [6.1, -6.4] },
+        { name: 'YouTube Music', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.7, -5] },
+        { name: 'Amazon Music', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [6.1, -5] },
+        { name: 'Switch Online', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-1.35, 5.3] },
+        { name: 'PS Plus', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [0, 5.3] },
+        { name: 'Game Pass', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [1.35, 5.3] },
+        { name: 'Duolingo', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-6.75, -.4] },
+        { name: 'スタディサプリ', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-5.4, -.4] },
+        { name: 'Udemy', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-4.05, -.4] },
+        { name: 'エニタイム', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [4.05, 5.3] },
+        { name: 'chocoZAP', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.4, 5.3] },
+        { name: 'Calm', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.75, 5.3] },
+        { name: '少年ジャンプ＋', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-6.75, -6.4] },
+        { name: 'ピッコマ', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.4, -6.4] },
+        { name: 'LINEマンガ', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.05, -6.4] },
+        { name: 'Google One', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-1.35, -.4] },
+        { name: 'Dropbox', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [0, -.4] },
+        { name: 'iCloud+', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -.4] },
+        { name: 'Amazonプライム', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
+        { name: '楽天プレミアム', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
       ];
       const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'item-get1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
@@ -389,14 +389,34 @@
       fillLight.position.set(7, 7, 4);
       scene.add(fillLight);
 
-      const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(26, 26),
+      // 小惑星ワールド: 街は大きな球体の表面に載っていて、ドラッグで回すと
+      // 地平線の向こうから別の街が現れる
+      const PLANET_RADIUS = 10;
+      const planet = new THREE.Group();
+      planet.position.y = -PLANET_RADIUS;
+      scene.add(planet);
+
+      const PLANET_UP = new THREE.Vector3(0, 1, 0);
+      // 平面レイアウト座標(x, z)を球面上の位置・姿勢に変換して配置する
+      function placeOnPlanet(object, x, z, lift = 0) {
+        const dist = Math.hypot(x, z);
+        const orientation = new THREE.Quaternion();
+        if (dist > 1e-6) {
+          const axis = new THREE.Vector3(z / dist, 0, -x / dist);
+          orientation.setFromAxisAngle(axis, dist / PLANET_RADIUS);
+        }
+        object.quaternion.copy(orientation);
+        object.position.copy(PLANET_UP.clone().applyQuaternion(orientation).multiplyScalar(PLANET_RADIUS + lift));
+        planet.add(object);
+        return orientation;
+      }
+
+      const globe = new THREE.Mesh(
+        new THREE.SphereGeometry(PLANET_RADIUS - .02, 56, 36),
         new THREE.MeshStandardMaterial({ color: 0x58a349, roughness: .9, metalness: .02 })
       );
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.y = -.02;
-      ground.receiveShadow = true;
-      scene.add(ground);
+      globe.receiveShadow = true;
+      planet.add(globe);
 
       const districtMonthly = genre => subscriptions
         .filter(sub => sub.genre === genre && sub.contracted)
@@ -426,27 +446,22 @@
         ctx.fillText(`${district.name} ${formatYen(monthly)}/月`, 320, 82);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
-        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
         label.scale.set(3.15, .79, 1);
-        label.position.set(district.center[0], 1.05, district.center[1] + district.size[1] / 2 - .08);
+        placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.05);
         return label;
       }
 
-      function createDistrictZoneGeometry(width, depth, radius = .22) {
-        const halfWidth = width / 2;
-        const halfDepth = depth / 2;
-        const corner = Math.min(radius, halfWidth, halfDepth);
-        const shape = new THREE.Shape();
-        shape.moveTo(-halfWidth + corner, -halfDepth);
-        shape.lineTo(halfWidth - corner, -halfDepth);
-        shape.quadraticCurveTo(halfWidth, -halfDepth, halfWidth, -halfDepth + corner);
-        shape.lineTo(halfWidth, halfDepth - corner);
-        shape.quadraticCurveTo(halfWidth, halfDepth, halfWidth - corner, halfDepth);
-        shape.lineTo(-halfWidth + corner, halfDepth);
-        shape.quadraticCurveTo(-halfWidth, halfDepth, -halfWidth, halfDepth - corner);
-        shape.lineTo(-halfWidth, -halfDepth + corner);
-        shape.quadraticCurveTo(-halfWidth, -halfDepth, -halfWidth + corner, -halfDepth);
-        return new THREE.ShapeGeometry(shape);
+      // 球面に沿って湾曲させた地区タイル(細分化した平面を放物近似で沈める)
+      function createDistrictZoneGeometry(width, depth) {
+        const geometry = new THREE.PlaneGeometry(width, depth, 8, 8);
+        const position = geometry.attributes.position;
+        for (let i = 0; i < position.count; i += 1) {
+          const vx = position.getX(i), vy = position.getY(i);
+          position.setZ(i, -(vx * vx + vy * vy) / (2 * PLANET_RADIUS));
+        }
+        geometry.computeVertexNormals();
+        return geometry;
       }
 
       districts.forEach(district => {
@@ -456,24 +471,29 @@
           createDistrictZoneGeometry(district.size[0], district.size[1]),
           new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .82, metalness: .03 })
         );
-        tile.rotation.x = -Math.PI / 2;
-        tile.position.set(district.center[0], .012, district.center[1]);
         tile.receiveShadow = true;
-        scene.add(tile);
-        scene.add(createDistrictLabel(district, monthly, heatStyle));
+        placeOnPlanet(tile, district.center[0], district.center[1], .015);
+        tile.rotateX(-Math.PI / 2);
+        createDistrictLabel(district, monthly, heatStyle);
       });
 
+      // 道路は短いセグメントに割って球面に沿わせる
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
+      const roadSegmentX = new THREE.BoxGeometry(.72, .07, .46);
+      const roadSegmentZ = new THREE.BoxGeometry(.46, .07, .72);
       [
-        { size: [16.6, .08, .46], position: [0, .075, -2.85] },
-        { size: [16.6, .08, .46], position: [0, .075, 2.85] },
-        { size: [.46, .08, 17.3], position: [-2.7, .075, 0] },
-        { size: [.46, .08, 17.3], position: [2.7, .075, 0] }
+        { alongX: true, length: 16.6, cross: -2.85 },
+        { alongX: true, length: 16.6, cross: 2.85 },
+        { alongX: false, length: 17.3, cross: -2.7 },
+        { alongX: false, length: 17.3, cross: 2.7 }
       ].forEach(road => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...road.size), roadMaterial);
-        mesh.position.set(...road.position);
-        mesh.receiveShadow = true;
-        scene.add(mesh);
+        const count = Math.ceil(road.length / .7);
+        for (let i = 0; i < count; i += 1) {
+          const along = -road.length / 2 + (i + .5) * road.length / count;
+          const mesh = new THREE.Mesh(road.alongX ? roadSegmentX : roadSegmentZ, roadMaterial);
+          mesh.receiveShadow = true;
+          placeOnPlanet(mesh, road.alongX ? along : road.cross, road.alongX ? road.cross : along, .02);
+        }
       });
 
       // 緑化: 島の外周に街路樹を植える
@@ -483,12 +503,12 @@
         new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 }),
         new THREE.MeshStandardMaterial({ color: 0x27793a, roughness: .85 })
       ];
-      for (let i = 0; i < 46; i += 1) {
-        const angle = (i / 46) * Math.PI * 2 + Math.random() * .22;
-        const radius = 9.3 + Math.random() * 2.4;
+      // 街の外周〜惑星の裏側まで森を散らして「外に広がっている」感を出す
+      for (let i = 0; i < 130; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = i < 46 ? 9.3 + Math.random() * 2.4 : 12 + Math.random() * (Math.PI * PLANET_RADIUS - 12.5);
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        if (Math.abs(x) > 12.4 || Math.abs(z) > 12.4) continue;
         const tree = new THREE.Group();
         const scale = .75 + Math.random() * .55;
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
@@ -502,8 +522,7 @@
         leaf.castShadow = true;
         tree.add(leaf);
         tree.scale.setScalar(scale);
-        tree.position.set(x, 0, z);
-        scene.add(tree);
+        placeOnPlanet(tree, x, z, 0);
       }
 
       // 昼空: 星の代わりにぽっかり浮かぶ雲
@@ -611,9 +630,9 @@
         const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
         const detailed = sub.contracted;
         const group = new THREE.Group();
-        group.position.set(sub.position[0], -.01, sub.position[1]);
-        group.rotation.y = sub.position[0] * -.009;
-        group.userData = { sub, index, destroyed: false, decision: null, baseX: group.position.x, baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
+        placeOnPlanet(group, sub.position[0], sub.position[1], -.01);
+        group.rotateY(sub.position[0] * -.009);
+        group.userData = { sub, index, destroyed: false, decision: null, baseQuaternion: group.quaternion.clone(), baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
         group.scale.setScalar(.01);
 
         const bodyHeight = height - .72;
@@ -644,7 +663,7 @@
 
         const halo = new THREE.Mesh(new THREE.RingGeometry(.73, .89, 24), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
         halo.rotation.x = -Math.PI / 2; halo.position.y = .14; group.add(halo); group.userData.halo = halo;
-        scene.add(group); buildings.push(group);
+        buildings.push(group);
       }
       subscriptions.forEach(createBuilding);
 
@@ -858,24 +877,35 @@
 
       function createTreeCoinParty() {
         const geometry = new THREE.CylinderGeometry(.18, .18, .06, 14);
-        const material = new THREE.MeshStandardMaterial({ color: 0xffcf32, emissive: 0xff920b, emissiveIntensity: .8, metalness: .82, roughness: .2 });
+        const material = new THREE.MeshStandardMaterial({ color: 0xffcf32, emissive: 0xff920b, emissiveIntensity: .8, metalness: .75, roughness: .2 });
         for (let i = 0; i < 34; i += 1) {
           const coin = new THREE.Mesh(geometry, material);
           coin.rotation.z = Math.PI / 2;
-          scene.add(coin);
+          savingsTree.add(coin);
           treePartyCoins.push({ mesh: coin, angle: i / 34 * Math.PI * 2, radius: 1.25 + Math.random() * 2.25, phase: Math.random(), speed: .45 + Math.random() * .75, rise: .15 + Math.random() * .18 });
         }
       }
 
-      savingsTree.position.set(0, 0, 10.1);
-      scene.add(savingsTree);
+      const savingsTreeBaseQuaternion = placeOnPlanet(savingsTree, 0, 10.1, 0);
       rebuildSavingsTree(0);
 
       const clampCameraDistance = value => Math.max(20, Math.min(52, value));
 
+      // 選択したビルが惑星の頂上(画面中央)に来るよう惑星ごと回す
+      let planetTween = null;
+      function startPlanetTween(building) {
+        const buildingWorld = new THREE.Vector3();
+        building.getWorldPosition(buildingWorld);
+        const planetCenter = new THREE.Vector3();
+        planet.getWorldPosition(planetCenter);
+        const direction = buildingWorld.sub(planetCenter).normalize();
+        const delta = new THREE.Quaternion().setFromUnitVectors(direction, PLANET_UP);
+        planetTween = { from: planet.quaternion.clone(), to: delta.multiply(planet.quaternion), startedAt: performance.now(), duration: 900 };
+      }
+
       function startCameraTween(building) {
         const target = building
-          ? { distance: clampCameraDistance(cameraDistance - 6), targetX: building.position.x, targetY: Math.min(2.8, building.userData.height * .42), targetZ: building.position.z }
+          ? { distance: clampCameraDistance(cameraDistance - 6), targetX: 0, targetY: Math.min(2.8, building.userData.height * .42), targetZ: 0 }
           : { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: 0 };
         viewTween = {
           startedAt: performance.now(),
@@ -945,7 +975,10 @@
         selected = building;
         if (!sameBuilding) destroyArmed = false;
         selected.userData.halo.material.opacity = .95;
-        if (!sameBuilding) startCameraTween(building);
+        if (!sameBuilding) {
+          startPlanetTween(building);
+          startCameraTween(building);
+        }
         updateSheet();
       }
 
@@ -986,7 +1019,11 @@
         pointer.x = event.clientX / innerWidth * 2 - 1;
         pointer.y = -(event.clientY / innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
-        const hit = raycaster.intersectObjects(clickableMeshes, false).find(item => !item.object.userData.building.userData.destroyed);
+        const globeHit = raycaster.intersectObject(globe, false)[0];
+        const hit = raycaster.intersectObjects(clickableMeshes, false).find(item =>
+          !item.object.userData.building.userData.destroyed &&
+          (!globeHit || item.distance < globeHit.distance + .5)
+        );
         if (hit) selectBuilding(hit.object.userData.building);
         else clearSelection();
       }
@@ -994,6 +1031,41 @@
       renderer.domElement.addEventListener('dblclick', event => {
         pick(event);
         if (selected) triggerHit();
+      });
+
+      // ドラッグで惑星を地球儀のように回す(タップ選択と区別するため移動量で判定)
+      let dragPointerId = null;
+      let lastDragX = 0, lastDragY = 0, dragTravel = 0;
+      const dragAxis = new THREE.Vector3();
+      const dragRotation = new THREE.Quaternion();
+      function rotatePlanetBy(dx, dy) {
+        const factor = .0042 * (cameraView.distance / 38);
+        dragAxis.set(1, 0, 0).applyQuaternion(camera.quaternion);
+        dragRotation.setFromAxisAngle(dragAxis, dy * factor);
+        planet.quaternion.premultiply(dragRotation);
+        dragAxis.set(0, 1, 0).applyQuaternion(camera.quaternion);
+        dragRotation.setFromAxisAngle(dragAxis, dx * factor);
+        planet.quaternion.premultiply(dragRotation);
+      }
+      renderer.domElement.addEventListener('pointerdown', event => {
+        if (pinchActive) return;
+        dragPointerId = event.pointerId;
+        lastDragX = event.clientX; lastDragY = event.clientY; dragTravel = 0;
+      });
+      renderer.domElement.addEventListener('pointermove', event => {
+        if (event.pointerId !== dragPointerId || pinchActive || openingRunning) return;
+        const dx = event.clientX - lastDragX;
+        const dy = event.clientY - lastDragY;
+        lastDragX = event.clientX; lastDragY = event.clientY;
+        dragTravel += Math.abs(dx) + Math.abs(dy);
+        if (dragTravel < 7) return;
+        suppressTapUntil = performance.now() + 350;
+        planetTween = null;
+        rotatePlanetBy(dx, dy);
+      });
+      renderer.domElement.addEventListener('pointercancel', () => { dragPointerId = null; });
+      renderer.domElement.addEventListener('pointerup', event => {
+        if (event.pointerId === dragPointerId) dragPointerId = null;
       });
 
       function pinchDistance(touches) {
@@ -1074,9 +1146,9 @@
           new THREE.BoxGeometry(1.16, .08, 1.07),
           new THREE.MeshStandardMaterial({ color: 0x242737, roughness: .96, metalness: 0 })
         );
-        lot.position.set(building.position.x, .25, building.position.z);
         lot.receiveShadow = true;
-        scene.add(lot);
+        const sub = building.userData.sub;
+        placeOnPlanet(lot, sub.position[0], sub.position[1], .04);
       }
 
       function animateSavings(amount) {
@@ -1217,6 +1289,12 @@
           });
           if (progress === 1) viewTween = null;
         }
+        if (planetTween) {
+          const progress = Math.min(1, (performance.now() - planetTween.startedAt) / planetTween.duration);
+          const eased = progress < .5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          planet.quaternion.slerpQuaternions(planetTween.from, planetTween.to, eased);
+          if (progress === 1) planetTween = null;
+        }
         buildings.forEach(building => {
           if (building.userData.buildBorn != null) {
             const buildAge = Math.min(1, (performance.now() - building.userData.buildBorn) / 340);
@@ -1225,12 +1303,12 @@
             if (buildAge === 1) building.userData.buildBorn = null;
           }
           if (building === selected && !building.userData.destroyed) {
-            building.position.x = building.userData.baseX + Math.sin(time * 22) * .055;
-            building.rotation.z = Math.sin(time * 18) * .018;
+            building.quaternion.copy(building.userData.baseQuaternion);
+            building.rotateZ(Math.sin(time * 18) * .018);
+            building.rotateX(Math.sin(time * 22) * .012);
             building.userData.halo.material.opacity = .62 + Math.sin(time * 5) * .25;
           } else {
-            building.position.x = building.userData.baseX;
-            building.rotation.z = 0;
+            building.quaternion.copy(building.userData.baseQuaternion);
           }
           const badge = building.userData.duplicateBadge;
           if (badge && badge.visible) badge.position.y = badge.userData.baseY + Math.sin(time * 3.2 + building.userData.index) * .12;
@@ -1267,14 +1345,15 @@
         } else {
           savingsTree.scale.setScalar(.01);
         }
-        savingsTree.rotation.y = Math.sin(time * 1.15) * .045;
+        savingsTree.quaternion.copy(savingsTreeBaseQuaternion);
+        savingsTree.rotateY(Math.sin(time * 1.15) * .045);
         treePartyCoins.forEach(coin => {
           coin.angle += dt * coin.speed;
           const lift = (time * coin.rise + coin.phase) % 1;
           coin.mesh.position.set(
-            savingsTree.position.x + Math.cos(coin.angle) * coin.radius,
+            Math.cos(coin.angle) * coin.radius,
             .7 + lift * 4.6,
-            savingsTree.position.z + Math.sin(coin.angle) * coin.radius
+            Math.sin(coin.angle) * coin.radius
           );
           coin.mesh.rotation.x += dt * 7;
           coin.mesh.rotation.y += dt * 10;
