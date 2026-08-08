@@ -219,7 +219,7 @@
     #cancel-stamp {
       position: fixed; z-index: 14; top: 44%; left: 50%; padding: 8px 18px; border: 7px double #e52c35; border-radius: 12px;
       color: #e52c35; background: rgba(255,245,221,.9); font-size: clamp(2.8rem, 15vw, 5.8rem); font-weight: 1000;
-      letter-spacing: .08em; line-height: 1; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4);
+      letter-spacing: .08em; line-height: 1; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4);
       text-shadow: 2px 2px 0 rgba(255,255,255,.8); box-shadow: 0 4px 18px rgba(75,0,12,.4);
     }
     #cancel-stamp.go { animation: stamp-in .8s cubic-bezier(.15,.85,.2,1); }
@@ -1891,7 +1891,7 @@
         clearSelection();
         renderFriendSheet();
         friendSheet.classList.add('visible');
-        playSound('item-get1', .5);
+        playSound('kira2', .35);
       }
 
       function closeFriendSheet() {
@@ -2030,7 +2030,7 @@
 
       function selectBuilding(building) {
         if (!building || building.userData.destroyed || !building.userData.sub.contracted) return;
-        playSound('item-get1', .5);
+        playSound('kira2', .35);
         const sameBuilding = selected === building;
         if (selected) selected.userData.halo.material.opacity = 0;
         selected = building;
@@ -2166,7 +2166,7 @@
         pinchActive = false;
       }, { passive: true });
 
-      function playSound(name, volume = 1) {
+      function playSound(name, volume = 1, maxSeconds) {
         const buffer = audioBuffers[name];
         if (audioContext && buffer) {
           const source = audioContext.createBufferSource(); // AudioBufferSourceNode（再生ごとに生成して重複可）
@@ -2175,6 +2175,12 @@
           gain.gain.value = volume;
           source.connect(gain).connect(audioContext.destination);
           source.start();
+          if (maxSeconds) {
+            const t = audioContext.currentTime;
+            gain.gain.setValueAtTime(volume, t + Math.max(0, maxSeconds - .25));
+            gain.gain.linearRampToValueAtTime(0, t + maxSeconds);
+            source.stop(t + maxSeconds + .02);
+          }
           return;
         }
         const fallback = sounds[name].cloneNode();
@@ -2282,9 +2288,8 @@
         destroyArmed = false;
         createExplosion(building);
         cameraShake = 1;
-        playSound('big-explosion1');
-        setTimeout(() => playSound('building-collapse-little1', .48), 300);
-        setTimeout(showCancelStamp, 400);
+        playSound('big-explosion1', 1, 1.1);
+        setTimeout(showCancelStamp, 450);
         flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
         building.visible = false;
         sheet.classList.remove('visible');
@@ -2295,8 +2300,8 @@
         clearSelection();
         updateDuplicateBadges();
         updateContractHeader();
-        setTimeout(() => playSound('money-drop1', .9), 270);
-        setTimeout(() => playSound('amount-display1', .78), 680);
+        setTimeout(() => playSound('money-drop1', .8), 750);
+        setTimeout(() => playSound('amount-display1', .7), 1100);
         checkAllDecided();
       }
 
