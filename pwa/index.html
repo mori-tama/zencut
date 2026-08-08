@@ -1184,7 +1184,7 @@
 
       function selectBuilding(building) {
         if (!building || building.userData.destroyed || !building.userData.sub.contracted) return;
-        playSound('item-get1', .5);
+        playSound('kira2', .35);
         const sameBuilding = selected === building;
         if (selected) selected.userData.halo.material.opacity = 0;
         selected = building;
