@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#171342">
+  <meta name="theme-color" content="#4aa3e8">
   <title>ZenCut</title>
   <style>
     :root {
@@ -24,7 +24,7 @@
       --mono: "Courier New", ui-monospace, Menlo, monospace;
     }
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #171342; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #4aa3e8; }
     body { color: var(--ink); touch-action: none; -webkit-tap-highlight-color: transparent; }
     button { font: inherit; }
     /* 共通: SimCity風ウィンドウのタイトルバー */
@@ -36,7 +36,7 @@
       border-bottom: 2px solid var(--steel-lo); box-shadow: inset 0 1px rgba(255, 255, 255, .35);
     }
     #stage, #stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-    #stage { background: linear-gradient(#171342 0%, #6c327d 44%, #f08b69 72%, #172a51 100%); }
+    #stage { background: linear-gradient(#3f97e0 0%, #74bdf0 38%, #c3e6fb 62%, #e8f6d8 74%, #6fae58 100%); }
 
     #title-screen {
       position: fixed; z-index: 20; inset: 0; display: grid; place-items: end center;
@@ -66,11 +66,11 @@
 
     #opening {
       position: fixed; z-index: 19; inset: 0; display: grid; place-items: center; padding: 24px;
-      background: radial-gradient(circle at 50% 42%, rgba(78,62,151,.96), rgba(12,9,42,.98) 66%);
+      background: radial-gradient(circle at 50% 42%, rgba(140,196,240,.96), rgba(58,124,190,.98) 66%);
       opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .3s, background .45s;
     }
     #opening.visible { opacity: 1; visibility: visible; pointer-events: auto; }
-    #opening.building { background: rgba(12,9,42,.08); }
+    #opening.building { background: rgba(120,180,235,.08); }
     .scan-card {
       width: min(88vw, 390px); padding: 0 0 20px; text-align: center;
       border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
@@ -89,7 +89,7 @@
       text-shadow: 0 0 7px rgba(86, 255, 141, .55);
     }
     #mail-label { margin: 0; color: #3c4257; font-size: .84rem; font-weight: 700; }
-    #skip-note { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); color: rgba(255,255,255,.65); font-size: .72rem; }
+    #skip-note { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); color: rgba(255,255,255,.9); text-shadow: 0 1px 3px rgba(20,40,70,.5); font-size: .72rem; }
 
     #hud {
       position: fixed; z-index: 5; top: 0; left: 0; right: 0; pointer-events: none;
@@ -181,7 +181,7 @@
 
     #celebration {
       position: fixed; z-index: 15; inset: 0; display: grid; place-items: center; padding: 24px;
-      background: radial-gradient(circle at 50% 56%, rgba(255,205,55,.28), rgba(15,10,55,.78) 52%, rgba(9,7,35,.94));
+      background: radial-gradient(circle at 50% 56%, rgba(255,225,120,.4), rgba(90,160,215,.8) 52%, rgba(45,100,160,.94));
       opacity: 0; visibility: hidden; transition: opacity .7s, visibility .7s; pointer-events: none;
     }
     #celebration.visible { opacity: 1; visibility: visible; pointer-events: auto; }
@@ -362,7 +362,7 @@
       const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x4c286d, 34, 70);
+      scene.fog = new THREE.Fog(0xa5d2f0, 34, 70);
       const camera = new THREE.PerspectiveCamera(innerWidth / innerHeight < .7 ? 52 : 42, innerWidth / innerHeight, .1, 100);
       const CAMERA_AZIMUTH = THREE.MathUtils.degToRad(40);
       const CAMERA_ELEVATION = THREE.MathUtils.degToRad(50);
@@ -379,19 +379,19 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       stage.appendChild(renderer.domElement);
 
-      scene.add(new THREE.HemisphereLight(0xffb9b0, 0x172a49, 2.45));
-      const sun = new THREE.DirectionalLight(0xffd9a0, 3.2);
+      scene.add(new THREE.HemisphereLight(0xeaf5ff, 0x6da457, 2.3));
+      const sun = new THREE.DirectionalLight(0xfff4d0, 3.1);
       sun.position.set(-7, 14, 9);
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
       scene.add(sun);
-      const purpleLight = new THREE.PointLight(0x7c4dff, 32, 24);
-      purpleLight.position.set(7, 7, 4);
-      scene.add(purpleLight);
+      const fillLight = new THREE.PointLight(0xfff0bd, 10, 24);
+      fillLight.position.set(7, 7, 4);
+      scene.add(fillLight);
 
       const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(26, 26),
-        new THREE.MeshStandardMaterial({ color: 0x24365b, roughness: .86, metalness: .08 })
+        new THREE.MeshStandardMaterial({ color: 0x58a349, roughness: .9, metalness: .02 })
       );
       ground.rotation.x = -Math.PI / 2;
       ground.position.y = -.02;
@@ -410,8 +410,8 @@
         const easedHeat = Math.pow(heat, .72);
         return {
           heat,
-          color: new THREE.Color(0x355f7a).lerp(new THREE.Color(0x96505b), easedHeat),
-          background: `rgba(${Math.round(48 + easedHeat * 88)}, ${Math.round(60 - easedHeat * 11)}, ${Math.round(92 - easedHeat * 18)}, .94)`
+          color: new THREE.Color(0x6fbb5c).lerp(new THREE.Color(0xc08a4a), easedHeat),
+          background: `rgba(${Math.round(58 + easedHeat * 118)}, ${Math.round(128 - easedHeat * 42)}, ${Math.round(62 - easedHeat * 8)}, .94)`
         };
       }
 
@@ -463,7 +463,7 @@
         scene.add(createDistrictLabel(district, monthly, heatStyle));
       });
 
-      const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x283247, roughness: .92 });
+      const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
       [
         { size: [16.6, .08, .46], position: [0, .075, -2.85] },
         { size: [16.6, .08, .46], position: [0, .075, 2.85] },
@@ -476,11 +476,50 @@
         scene.add(mesh);
       });
 
-      const starGeometry = new THREE.BufferGeometry();
-      const starPositions = [];
-      for (let i = 0; i < 85; i += 1) starPositions.push((Math.random() - .5) * 35, 8 + Math.random() * 16, -7 - Math.random() * 10);
-      starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-      scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xfff5cf, size: .075, transparent: true, opacity: .85 })));
+      // 緑化: 島の外周に街路樹を植える
+      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x7a4f2a, roughness: .9 });
+      const leafMaterials = [
+        new THREE.MeshStandardMaterial({ color: 0x2e8b3d, roughness: .85 }),
+        new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 }),
+        new THREE.MeshStandardMaterial({ color: 0x27793a, roughness: .85 })
+      ];
+      for (let i = 0; i < 46; i += 1) {
+        const angle = (i / 46) * Math.PI * 2 + Math.random() * .22;
+        const radius = 9.3 + Math.random() * 2.4;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        if (Math.abs(x) > 12.4 || Math.abs(z) > 12.4) continue;
+        const tree = new THREE.Group();
+        const scale = .75 + Math.random() * .55;
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
+        trunk.position.y = .15;
+        tree.add(trunk);
+        const leaf = new THREE.Mesh(
+          new THREE.ConeGeometry(.3, .72, 7),
+          leafMaterials[i % leafMaterials.length]
+        );
+        leaf.position.y = .62;
+        leaf.castShadow = true;
+        tree.add(leaf);
+        tree.scale.setScalar(scale);
+        tree.position.set(x, 0, z);
+        scene.add(tree);
+      }
+
+      // 昼空: 星の代わりにぽっかり浮かぶ雲
+      const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .88, fog: false });
+      for (let i = 0; i < 7; i += 1) {
+        const cloud = new THREE.Group();
+        const puffCount = 3 + (i % 3);
+        for (let p = 0; p < puffCount; p += 1) {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(.65 + Math.random() * .55, 10, 8), cloudMaterial);
+          puff.position.set(p * .85 - puffCount * .4, Math.random() * .25, Math.random() * .3);
+          puff.scale.y = .55;
+          cloud.add(puff);
+        }
+        cloud.position.set((Math.random() - .5) * 30, 9 + Math.random() * 7, -8 - Math.random() * 8);
+        scene.add(cloud);
+      }
 
       const buildings = [];
       const clickableMeshes = [];
