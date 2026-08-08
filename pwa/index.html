@@ -390,7 +390,7 @@
         { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [.85, -4.95] }
       ];
       const knownGenres = new Set(districts.map(district => district.genre));
-      const otherDistrictCenter = [26, -16];
+      const otherDistrictCenter = [12, -16];
       const scanSlotOffsets = [
         [-2.1, -1.25], [-.7, -1.25], [.7, -1.25], [2.1, -1.25],
         [-2.1, 1.05], [-.7, 1.05], [.7, 1.05], [2.1, 1.05]
@@ -503,11 +503,11 @@
 
       // 街区を1つの都市に固めず、惑星全体に散らす(モック座標は街区ごと移動、スキャン配置は新centerを自動参照)
       const districtSpread = {
-        'AI': [0, 4], 'ゲーム': [13, 6], 'からだ': [-12, 8], '通信': [3, -15], 'ほけん': [-15, -6],
-        '学び': [17, -8], 'クラウド': [-6, 19], 'おかいもの': [2, 24], 'ごはん': [-14, 16],
-        'ニュース': [22, 7], 'マンガ': [-16, -22], '動画': [12, -24], '音楽': [-28, -5]
+        'AI': [0, 3.5], 'ゲーム': [7, 6], 'からだ': [-7, 6], '通信': [3.5, -4], 'ほけん': [-10.5, -1],
+        '学び': [10.5, -1], 'クラウド': [-3.5, -4], 'おかいもの': [4, 12], 'ごはん': [-14.5, 4.5],
+        'ニュース': [14.5, 4.5], 'マンガ': [-7, -10], '動画': [7, -10], '音楽': [-4.5, 13]
       };
-      const parkSpread = { 'みどり公園': [-9, 28], 'ひろば公園': [20, 20] };
+      const parkSpread = { 'みどり公園': [-12, -16], 'ひろば公園': [18, -6] };
       districts.forEach(district => {
         const to = districtSpread[district.genre];
         if (!to) return;
@@ -751,7 +751,7 @@
       );
       // 惑星のランドマーク(湖・山・農園・村・花畑)の予定地。木はここを避ける
       const featureZones = [
-        { x: 2, z: 16, r: 4.4 },
+        { x: 0, z: 20, r: 4.4 },
         { x: -2, z: -14, r: 2.3 },
         { x: -21, z: -13, r: 3.6 },
         { x: -22, z: 8, r: 3.4 },
@@ -891,7 +891,7 @@
       }
 
       // featureZonesの座標と対応させて配置(木はそこを避けて生えている)
-      createLake(2, 16, 4.6);
+      createLake(0, 20, 4.6);
       createLake(-2, -14, 2.1);
       createMountains(-21, -13);
       createFarm(-22, 8);
