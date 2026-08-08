@@ -994,23 +994,6 @@
       let viewTween = null;
       const cameraView = { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: 0 };
 
-      function roundedBox(width, height, depth, color, y, bevel = .08, detailed = true) {
-        const segments = detailed ? 2 : 1;
-        const geometry = new THREE.BoxGeometry(width, height, depth, segments, segments, segments);
-        const position = geometry.attributes.position;
-        for (let i = 0; i < position.count; i += 1) {
-          const x = position.getX(i), z = position.getZ(i);
-          const scale = 1 - bevel * Math.max(0, Math.abs(position.getY(i)) / (height / 2));
-          position.setXYZ(i, x * scale, position.getY(i), z * scale);
-        }
-        geometry.computeVertexNormals();
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color, roughness: .58, metalness: .12 }));
-        mesh.position.y = y;
-        mesh.castShadow = detailed;
-        mesh.receiveShadow = true;
-        return mesh;
-      }
-
       function createSign(sub) {
         const canvas = document.createElement('canvas');
         canvas.width = 512; canvas.height = 256;
@@ -1032,56 +1015,193 @@
         return sign;
       }
 
-      function addWindows(group, width, height, baseY, sub) {
-        const rows = Math.max(1, Math.floor(height / .62));
-        const cols = 2;
-        const material = sub.contracted
-          ? new THREE.MeshStandardMaterial({ color: 0xffe16a, emissive: 0xff9d23, emissiveIntensity: 2.1 })
-          : new THREE.MeshStandardMaterial({ color: 0x555665, emissive: 0x151620, emissiveIntensity: .15 });
+      // ---- ビルのデザインシステム ----
+      // 窓はメッシュを並べず、壁面テクスチャに焼き込んで4面すべてに表示する
+      function seededRand(seed) {
+        let state = (seed * 2654435761 + 104729) % 2147483647;
+        if (state <= 0) state += 2147483646;
+        return () => (state = state * 16807 % 2147483647) / 2147483647;
+      }
+
+      function createFacadeMaterials(sub, rand, tierHeight, width) {
+        const rows = Math.max(1, Math.min(9, Math.round(tierHeight / .52)));
+        const cols = Math.max(2, Math.min(5, Math.round(width / .3)));
+        const canvas = document.createElement('canvas');
+        canvas.width = 96; canvas.height = 96;
+        const ctx = canvas.getContext('2d');
+        const bodyColor = new THREE.Color(sub.contracted ? sub.color : 0x8b8f9a);
+        const topColor = bodyColor.clone().lerp(new THREE.Color(0xffffff), .2);
+        const bottomColor = bodyColor.clone().lerp(new THREE.Color(0x232838), .28);
+        const gradient = ctx.createLinearGradient(0, 0, 0, 96);
+        gradient.addColorStop(0, `#${topColor.getHexString()}`);
+        gradient.addColorStop(1, `#${bottomColor.getHexString()}`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 96, 96);
+        const marginX = 11, marginTop = 10, marginBottom = 13;
+        const cellW = (96 - marginX * 2) / cols;
+        const cellH = (96 - marginTop - marginBottom) / rows;
         for (let row = 0; row < rows; row += 1) {
           for (let col = 0; col < cols; col += 1) {
-            if ((row + col + sub.months) % 5 === 0) continue;
-            const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(.19, .17, .035), material);
-            windowMesh.position.set((col - .5) * .38, baseY - height / 2 + .38 + row * .48, .558);
-            group.add(windowMesh);
+            const lit = rand() < (sub.contracted ? .56 : .2);
+            const x = marginX + col * cellW + cellW * .18;
+            const y = marginTop + row * cellH + cellH * .22;
+            ctx.fillStyle = lit ? '#ffe9a3' : '#2a3145';
+            ctx.fillRect(x, y, cellW * .64, cellH * .56);
+            if (lit) {
+              ctx.fillStyle = 'rgba(255,255,255,.5)';
+              ctx.fillRect(x, y, cellW * .64, cellH * .18);
+            }
           }
         }
+        ctx.fillStyle = 'rgba(18,22,36,.4)';
+        ctx.fillRect(0, 92, 96, 4);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const wall = new THREE.MeshStandardMaterial({ map: texture, roughness: .62, metalness: .08 });
+        const roofMaterial = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(sub.contracted ? sub.dark : 0x55545d).lerp(new THREE.Color(0xffffff), .14),
+          roughness: .8
+        });
+        return [wall, wall, roofMaterial, roofMaterial, wall, wall];
+      }
+
+      function addTier(group, sub, rand, width, depth, tierHeight, baseY) {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(width, tierHeight, depth),
+          createFacadeMaterials(sub, rand, tierHeight, width)
+        );
+        mesh.position.y = baseY + tierHeight / 2;
+        mesh.castShadow = sub.contracted;
+        mesh.receiveShadow = true;
+        mesh.userData.building = group;
+        group.add(mesh);
+        if (sub.contracted) clickableMeshes.push(mesh);
+        return mesh;
+      }
+
+      function addLedge(group, width, depth, y, colorHex, cx = 0, cz = 0) {
+        const ledge = new THREE.Mesh(
+          new THREE.BoxGeometry(width, .09, depth),
+          new THREE.MeshStandardMaterial({ color: colorHex, roughness: .72 })
+        );
+        ledge.position.set(cx, y, cz);
+        group.add(ledge);
+      }
+
+      const tankMaterial = new THREE.MeshStandardMaterial({ color: 0xc9cdd6, roughness: .55, metalness: .3 });
+      const tankCapMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa0ad, roughness: .6 });
+      const acUnitMaterial = new THREE.MeshStandardMaterial({ color: 0xb7bcc6, roughness: .82 });
+      const antennaMaterial = new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.2 });
+      const antennaTipMaterial = new THREE.MeshStandardMaterial({ color: 0xff6b5c, emissive: 0xff3b2a, emissiveIntensity: 1.4 });
+      const tankGeometry = new THREE.CylinderGeometry(.11, .11, .2, 10);
+      const tankCapGeometry = new THREE.ConeGeometry(.125, .09, 10);
+      const acUnitGeometry = new THREE.BoxGeometry(.17, .12, .14);
+      const awningGeometry = new THREE.BoxGeometry(.82, .05, .32);
+      const doorGeometry = new THREE.BoxGeometry(.2, .3, .04);
+      const awningColors = [0xd86a5a, 0x4f8fc9, 0x54a86b, 0xd8a44f];
+
+      function addRoofProps(group, rand, width, depth, y, cx = 0, cz = 0) {
+        if (rand() < .65) {
+          const tank = new THREE.Mesh(tankGeometry, tankMaterial);
+          tank.position.set(cx + (rand() - .5) * width * .5, y + .1, cz + (rand() - .5) * depth * .5);
+          group.add(tank);
+          const cap = new THREE.Mesh(tankCapGeometry, tankCapMaterial);
+          cap.position.set(tank.position.x, y + .24, tank.position.z);
+          group.add(cap);
+        }
+        const acCount = 1 + Math.floor(rand() * 2);
+        for (let i = 0; i < acCount; i += 1) {
+          const ac = new THREE.Mesh(acUnitGeometry, acUnitMaterial);
+          ac.position.set(cx + (rand() - .5) * width * .6, y + .06, cz + (rand() - .5) * depth * .6);
+          ac.rotation.y = rand() * Math.PI;
+          group.add(ac);
+        }
+      }
+
+      function addSpire(group, y, cx = 0) {
+        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.02, .035, .5, 6), antennaMaterial);
+        antenna.position.set(cx, y + .25, 0);
+        group.add(antenna);
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), antennaTipMaterial);
+        tip.position.set(cx, y + .52, 0);
+        group.add(tip);
       }
 
       function createBuilding(sub, index) {
         const paid = sub.price * sub.months;
-        const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
-        const detailed = sub.contracted;
+        const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.05;
+        const rand = seededRand(index + 1);
         const group = new THREE.Group();
         placeOnPlanet(group, sub.position[0], sub.position[1], -.01);
         group.rotateY((Math.random() - .5) * .6);
         group.userData = { sub, index, destroyed: false, decision: null, baseQuaternion: group.quaternion.clone(), baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
         group.scale.setScalar(.01);
 
-        const bodyHeight = height - .72;
-        const base = roundedBox(1.14, bodyHeight, 1.05, sub.color, bodyHeight / 2 + .08, detailed ? .08 : 0, detailed);
-        base.castShadow = sub.contracted;
-        base.userData.building = group;
-        group.add(base);
-        if (sub.contracted) clickableMeshes.push(base);
-        group.userData.body = base;
-        if (detailed) addWindows(group, 1.14, bodyHeight, bodyHeight / 2 + .08, sub);
+        const ledgeColor = sub.contracted ? sub.dark : 0x5a5e6b;
+        let body;
 
-        const upper = roundedBox(1.02, .72, .95, sub.dark, height - .3, detailed ? .08 : 0, detailed);
-        upper.castShadow = sub.contracted;
-        upper.userData.building = group;
-        group.add(upper);
-        if (sub.contracted) clickableMeshes.push(upper);
-        const roof = roundedBox(.82, .18, .76, sub.contracted ? 0x413267 : 0x55545d, height + .14, detailed ? .04 : 0, detailed);
-        roof.castShadow = sub.contracted;
-        group.add(roof);
-        if (detailed) {
-          const cap = roundedBox(.43, .18, .4, sub.color, height + .32, .03);
-          group.add(cap);
-          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .38, 7), new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.5 }));
-          antenna.position.y = height + .6; group.add(antenna);
+        if (!sub.contracted) {
+          // 未契約: ひさしとドアのついた小さな商店
+          body = addTier(group, sub, rand, .98, .84, .8, .06);
+          addLedge(group, 1.06, .92, .9, ledgeColor);
+          const awning = new THREE.Mesh(awningGeometry, new THREE.MeshStandardMaterial({ color: awningColors[index % awningColors.length], roughness: .8 }));
+          awning.position.set(0, .56, .48);
+          awning.rotation.x = .35;
+          group.add(awning);
+          const door = new THREE.Mesh(doorGeometry, new THREE.MeshStandardMaterial({ color: 0x3a3f4e, roughness: .7 }));
+          door.position.set(-.24, .21, .43);
+          group.add(door);
+          addRoofProps(group, rand, .8, .66, .95);
+        } else {
+          const bodyHeight = Math.max(1, height - .55);
+          const style = Math.floor(rand() * 3);
+          if (style === 0) {
+            // 段々ビル: 上にいくほど細くなるセットバック
+            const fractions = bodyHeight > 2.6 ? [.52, .3, .18] : [.6, .4];
+            const widths = [1.22, .98, .74];
+            const depths = [1.08, .88, .68];
+            let y = .08;
+            fractions.forEach((fraction, i) => {
+              const tierHeight = bodyHeight * fraction;
+              const mesh = addTier(group, sub, rand, widths[i], depths[i], tierHeight, y);
+              if (i === 0) body = mesh;
+              y += tierHeight;
+              addLedge(group, widths[i] + .1, depths[i] + .1, y + .02, ledgeColor);
+              y += .07;
+            });
+            addRoofProps(group, rand, .64, .56, y + .03);
+            if (rand() < .7) addSpire(group, y + .03);
+          } else if (style === 1) {
+            // クラウンタワー: 直胴の上に張り出した頂部と尖塔
+            const shaftHeight = bodyHeight * .8;
+            body = addTier(group, sub, rand, 1.04, .94, shaftHeight, .08);
+            addLedge(group, 1.14, 1.02, shaftHeight + .11, ledgeColor);
+            const crownHeight = bodyHeight * .2 + .08;
+            addTier(group, sub, rand, 1.24, 1.1, crownHeight, shaftHeight + .15);
+            const crownTop = shaftHeight + .15 + crownHeight;
+            addLedge(group, 1.32, 1.18, crownTop + .02, ledgeColor);
+            addRoofProps(group, rand, 1, .9, crownTop + .05);
+            addSpire(group, crownTop + .05);
+          } else {
+            // ツイン棟: 高さ違いの2棟が寄り添う複合ビル
+            const annexHeight = bodyHeight * (.52 + rand() * .2);
+            body = addTier(group, sub, rand, .78, .96, bodyHeight, .08);
+            body.position.x = -.26;
+            addLedge(group, .88, 1.04, bodyHeight + .11, ledgeColor, -.26);
+            const annex = addTier(group, sub, rand, .64, .8, annexHeight, .08);
+            annex.position.set(.4, annexHeight / 2 + .08, -.04);
+            addLedge(group, .72, .88, annexHeight + .11, ledgeColor, .4, -.04);
+            addRoofProps(group, rand, .55, .7, annexHeight + .14, .4, -.04);
+            if (rand() < .8) addSpire(group, bodyHeight + .13, -.26);
+          }
         }
-        const sign = createSign(sub); sign.position.y = height - .3; sign.userData.building = group; group.add(sign);
+
+        group.userData.body = body;
+        const sign = createSign(sub);
+        sign.position.y = height - .3;
+        if (!sub.contracted) sign.scale.setScalar(.82);
+        sign.userData.building = group;
+        group.add(sign);
         if (sub.contracted) clickableMeshes.push(sign);
 
         const halo = new THREE.Mesh(new THREE.RingGeometry(.73, .89, 24), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
@@ -1405,13 +1525,20 @@
         startCameraTween(null);
       }
 
+      function setBodyEmissive(building, hex, intensity) {
+        const materials = building.userData.body.material;
+        (Array.isArray(materials) ? materials : [materials]).forEach(material => {
+          material.emissive.setHex(hex);
+          material.emissiveIntensity = intensity;
+        });
+      }
+
       function createKeepDecoration(building) {
         if (building.userData.keepDecoration) {
           building.userData.keepDecoration.visible = true;
           building.userData.keepDecoration.scale.setScalar(.01);
           building.userData.keepDecoration.userData.born = performance.now();
-          building.userData.body.material.emissive.setHex(0x16854b);
-          building.userData.body.material.emissiveIntensity = .75;
+          setBodyEmissive(building, 0x16854b, .75);
           return;
         }
         const mini = new THREE.Group();
@@ -1429,8 +1556,7 @@
         mini.userData.born = performance.now();
         building.add(mini);
         building.userData.keepDecoration = mini;
-        building.userData.body.material.emissive.setHex(0x16854b);
-        building.userData.body.material.emissiveIntensity = .75;
+        setBodyEmissive(building, 0x16854b, .75);
       }
 
       function updateSheet() {
@@ -1478,8 +1604,7 @@
         if (!selected || selected.userData.decision !== 'keep') return;
         selected.userData.decision = null;
         if (selected.userData.keepDecoration) selected.userData.keepDecoration.visible = false;
-        selected.userData.body.material.emissive.setHex(0x000000);
-        selected.userData.body.material.emissiveIntensity = 1;
+        setBodyEmissive(selected, 0x000000, 1);
         updateSheet();
         checkAllDecided();
       }
