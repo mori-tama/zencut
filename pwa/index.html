@@ -1558,6 +1558,17 @@
         openingInterval = null;
       }
 
+      // 建設演出のあと、街が間近に見える距離までスッと寄る
+      function zoomIntoCity() {
+        cameraDistance = clampCameraDistance(innerWidth / innerHeight < .7 ? 33 : 30);
+        viewTween = {
+          startedAt: performance.now(),
+          duration: 1500,
+          from: { ...cameraView },
+          to: { distance: cameraDistance, targetX: 0, targetY: 1.2, targetZ: 0 }
+        };
+      }
+
       function finishOpeningImmediately() {
         if (!openingRunning) return;
         clearOpeningTimers();
@@ -1569,6 +1580,7 @@
         savingsTree.scale.setScalar(1);
         openingRunning = false;
         opening.classList.remove('visible', 'building');
+        zoomIntoCity();
       }
 
       function beginCityBuild() {
@@ -1601,6 +1613,7 @@
           if (!openingRunning) return;
           openingRunning = false;
           opening.classList.remove('visible', 'building');
+          zoomIntoCity();
         }, lastBuildingAt + 920);
       }
 
