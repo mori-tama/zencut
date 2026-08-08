@@ -1457,6 +1457,7 @@
       }
       subscriptions.forEach(createBuilding);
 
+
       function createDuplicateBadge(building) {
         const canvas = document.createElement('canvas');
         canvas.width = 256; canvas.height = 96;
@@ -1887,15 +1888,38 @@
         });
       }
 
+      let friendFocused = false;
       function openFriendSheet() {
         clearSelection();
         renderFriendSheet();
         friendSheet.classList.add('visible');
         playSound('item-get1', .5);
+        // 友達の星へ少しズームインする
+        friendFocused = true;
+        planetTween = null;
+        viewTween = {
+          startedAt: performance.now(),
+          duration: 1100,
+          from: { ...cameraView },
+          to: {
+            distance: clampCameraDistance(14),
+            targetX: friendPlanet.position.x,
+            targetY: friendPlanet.position.y + 2.4,
+            targetZ: friendPlanet.position.z
+          }
+        };
       }
 
       function closeFriendSheet() {
         friendSheet.classList.remove('visible');
+        if (!friendFocused) return;
+        friendFocused = false;
+        viewTween = {
+          startedAt: performance.now(),
+          duration: 1100,
+          from: { ...cameraView },
+          to: { distance: cameraDistance, targetX: 0, targetY: 1.2, targetZ: 0 }
+        };
       }
       friendCloseButton.addEventListener('click', closeFriendSheet);
 
