@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171342">
+  <title>Gmailから街を建てる | ZenCut</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+      --ink: #fff8df;
+      --muted: #ddd5f5;
+      --gold: #ffd34d;
+      --glass: rgba(25, 18, 67, .82);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: #171342; }
+    body {
+      min-height: 100vh; min-height: 100dvh; margin: 0; color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 25%, rgba(255, 201, 111, .18), transparent 23%),
+        radial-gradient(circle at 82% 66%, rgba(246, 125, 126, .22), transparent 30%),
+        linear-gradient(165deg, #171342 0%, #513173 46%, #db7269 78%, #172a51 100%);
+      background-attachment: fixed;
+    }
+    body::before, body::after {
+      content: ""; position: fixed; z-index: -1; border-radius: 50%; filter: blur(1px); opacity: .75;
+    }
+    body::before { width: 9px; height: 9px; top: 15%; left: 12%; background: #ffe69a; box-shadow: 72vw 7vh #fff, 21vw 24vh #ffd5ee, 58vw 55vh #ffe69a; }
+    body::after { width: 180px; height: 70px; right: -30px; bottom: 9%; background: rgba(26, 34, 87, .44); box-shadow: -70vw -5vh rgba(26, 34, 87, .35); }
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    main { width: min(100% - 28px, 620px); margin: 0 auto; padding: max(34px, env(safe-area-inset-top)) 0 max(42px, env(safe-area-inset-bottom)); }
+    .hero { text-align: center; padding: 13vh 6px 24px; }
+    .brand { margin: 0 0 18px; color: var(--gold); font-size: .86rem; font-weight: 1000; letter-spacing: .16em; }
+    h1 { margin: 0; color: #fff; font-size: clamp(1.85rem, 7vw, 3rem); line-height: 1.34; text-shadow: 0 4px 18px rgba(17, 8, 50, .62); }
+    .lead { margin: 16px auto 0; max-width: 35em; color: var(--muted); line-height: 1.75; font-weight: 700; }
+    .card {
+      padding: 22px; border: 1px solid rgba(255,255,255,.24); border-radius: 28px;
+      background: var(--glass); box-shadow: 0 20px 55px rgba(7, 4, 35, .38); backdrop-filter: blur(14px);
+    }
+    .primary {
+      display: block; width: 100%; min-height: 62px; border: 2px solid #fff0ac; border-radius: 999px;
+      color: #3b2450; background: linear-gradient(#fff4a6, #ffbe36); font-size: 1.08rem; font-weight: 1000;
+      box-shadow: 0 7px 0 #a85234, 0 13px 25px rgba(0,0,0,.28); cursor: pointer;
+    }
+    .primary:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 3px 0 #a85234; }
+    .primary:disabled { cursor: wait; filter: saturate(.55); opacity: .74; }
+    #progress { margin-top: 22px; text-align: center; }
+    #progress[hidden], #results[hidden], #error-box[hidden] { display: none; }
+    .mail { font-size: 2.7rem; animation: bob 1.2s ease-in-out infinite; }
+    #status { margin: 8px 0 10px; color: #fff; font-weight: 1000; }
+    .bar { height: 10px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.13); }
+    #bar-fill { width: 7%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffbe36, #ff758a); transition: width .25s ease; }
+    #results { margin-top: 20px; }
+    .results-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .results-head h2 { margin: 0; font-size: 1.25rem; }
+    #result-summary { margin: 0; color: var(--gold); font-size: .86rem; font-weight: 800; }
+    #result-list { display: grid; gap: 10px; }
+    .sub {
+      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px;
+      border: 1px solid rgba(255,255,255,.16); border-radius: 18px; background: rgba(255,255,255,.075); cursor: pointer;
+    }
+    .sub:has(input:not(:checked)) { opacity: .52; }
+    .sub-icon { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 14px; background: rgba(255,255,255,.12); font-size: 1.55rem; }
+    .sub-name { overflow-wrap: anywhere; color: #fff; font-weight: 1000; }
+    .sub-meta { margin-top: 3px; color: var(--muted); font-size: .77rem; }
+    .sub-price { color: var(--gold); font-weight: 1000; white-space: nowrap; }
+    .sub input { width: 22px; height: 22px; margin: 0 0 0 8px; accent-color: #ffcf43; }
+    #save { margin-top: 18px; }
+    #empty { padding: 18px 8px; color: var(--muted); text-align: center; line-height: 1.7; }
+    #error-box { margin-top: 18px; padding: 17px; border: 1px solid rgba(255,221,183,.3); border-radius: 18px; background: rgba(102, 33, 58, .4); text-align: center; }
+    #error-message { margin: 0 0 12px; line-height: 1.65; }
+    .mock-link { color: #fff1a6; font-weight: 1000; }
+    .privacy { margin: 18px 4px 0; color: rgba(255,255,255,.68); font-size: .72rem; line-height: 1.6; text-align: center; }
+    @keyframes bob { 50% { transform: translateY(-6px) rotate(3deg); } }
+    @media (max-width: 410px) {
+      main { width: min(100% - 20px, 620px); }
+      .card { padding: 17px; }
+      .sub { gap: 9px; padding: 12px 10px; }
+      .sub-icon { width: 38px; height: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="brand">ZEN<span aria-hidden="true">✦</span>CUT</p>
+      <h1>📩 Gmailから<br>あなたのサブスク街を建てる</h1>
+      <p class="lead">この1年の請求メールから、街の住人を見つけます。メール本文は保存しません。</p>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <button id="login" class="primary" type="button">Googleでログインしてスキャン</button>
+
+      <div id="progress" hidden>
+        <div class="mail" aria-hidden="true">💌</div>
+        <p id="status">Googleに接続しています…</p>
+        <div class="bar" role="progressbar" aria-label="スキャン進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="7">
+          <div id="bar-fill"></div>
+        </div>
+      </div>
+
+      <div id="error-box" role="alert" hidden>
+        <p id="error-message"></p>
+        <a class="mock-link" href="./index.html">モックで見る → index.html</a>
+      </div>
+
+      <section id="results" hidden>
+        <div class="results-head">
+          <h2>見つかった街の住人</h2>
+          <p id="result-summary"></p>
+        </div>
+        <div id="result-list"></div>
+        <div id="empty" hidden>サブスクらしいメールは見つかりませんでした。<br>モックの街から始めることもできます。</div>
+        <button id="save" class="primary" type="button">この内容で街を建てる🏙️</button>
+      </section>
+    </section>
+    <p class="privacy">Gmailへのアクセスは、このブラウザ内でサブスク候補を探すためだけに使います。</p>
+  </main>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const GOOGLE_CLIENT_ID = '614814546255-cto9nd8k8upo88bgt2o2jpveofs56ll8.apps.googleusercontent.com';
+      const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+      const API_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me/messages';
+      const MAX_MESSAGES = 120;
+      const MAX_CONCURRENCY = 5;
+
+      const SEARCH_QUERIES = [
+        'newer_than:1y {subject:領収書 subject:請求 subject:ご請求 subject:お支払い subject:receipt subject:payment}',
+        'newer_than:1y {from:apple.com from:google.com from:netflix.com from:spotify.com from:amazon.co.jp}',
+        'newer_than:1y {subject:subscription subject:renewal subject:更新 subject:月額 subject:年額}'
+      ];
+
+      const GENRES = {
+        'AI': { icon: '🤖', price: 3000 }, '動画': { icon: '🎬', price: 1000 },
+        '音楽': { icon: '🎵', price: 1000 }, 'ゲーム': { icon: '🎮', price: 1000 },
+        '学び': { icon: '📖', price: 1500 }, 'からだ': { icon: '🏃', price: 3000 },
+        'マンガ': { icon: '📚', price: 800 }, 'クラウド': { icon: '☁️', price: 300 },
+        'おかいもの': { icon: '📦', price: 600 }, '通信': { icon: '📱', price: 4000 },
+        'ほけん': { icon: '🛡️', price: 3000 }, 'ごはん': { icon: '🍽️', price: 3000 },
+        'ニュース': { icon: '📰', price: 1000 }, 'そのほか': { icon: '🏠', price: 1000 }
+      };
+
+      const SERVICE_RULES = [
+        { name: 'Netflix', genre: '動画', domains: ['netflix.com'] },
+        { name: 'YouTube Premium', genre: '動画', domains: ['youtube.com'], words: ['premium'] },
+        { name: 'Disney+', genre: '動画', domains: ['disneyplus.com', 'disney.com'] },
+        { name: 'Hulu', genre: '動画', domains: ['hulu.jp', 'hulu.com'] },
+        { name: 'U-NEXT', genre: '動画', domains: ['unext.jp'] },
+        { name: 'Spotify', genre: '音楽', domains: ['spotify.com'] },
+        { name: 'Apple Music', genre: '音楽', domains: ['apple.com'], words: ['music'] },
+        { name: 'iCloud+', genre: 'クラウド', domains: ['apple.com'], words: ['icloud'] },
+        { name: 'Apple', genre: 'そのほか', domains: ['apple.com'] },
+        { name: 'Google One', genre: 'クラウド', domains: ['google.com'], words: ['google one', 'ストレージ'] },
+        { name: 'Google Play', genre: 'ゲーム', domains: ['google.com'], words: ['google play'] },
+        { name: 'Google', genre: 'そのほか', domains: ['google.com'] },
+        { name: 'Kindle Unlimited', genre: 'マンガ', domains: ['amazon.co.jp', 'amazon.com'], words: ['kindle unlimited'] },
+        { name: 'Amazon Prime', genre: 'おかいもの', domains: ['amazon.co.jp', 'amazon.com'], words: ['prime', 'プライム'] },
+        { name: 'Amazon', genre: 'おかいもの', domains: ['amazon.co.jp', 'amazon.com'] },
+        { name: 'ChatGPT', genre: 'AI', domains: ['openai.com'], words: ['chatgpt', 'openai'] },
+        { name: 'Claude', genre: 'AI', domains: ['anthropic.com'], words: ['claude', 'anthropic'] },
+        { name: 'Adobe', genre: '学び', domains: ['adobe.com'] },
+        { name: 'Microsoft 365', genre: 'クラウド', domains: ['microsoft.com'], words: ['365', 'onedrive'] },
+        { name: 'Nintendo Switch Online', genre: 'ゲーム', domains: ['nintendo.net', 'nintendo.co.jp'] },
+        { name: 'PlayStation Plus', genre: 'ゲーム', domains: ['playstation.com', 'sony.com'], words: ['playstation', 'ps plus'] },
+        { name: 'Audible', genre: '学び', domains: ['audible.co.jp', 'audible.com'] },
+        { name: 'note', genre: 'ニュース', domains: ['note.com'] },
+        { name: 'Dropbox', genre: 'クラウド', domains: ['dropbox.com'] },
+        { name: 'Duolingo', genre: '学び', domains: ['duolingo.com'] }
+      ];
+
+      const GENRE_WORDS = [
+        ['AI', ['ai', 'chatgpt', 'claude', '生成']], ['動画', ['video', 'movie', '動画', '映画', '配信']],
+        ['音楽', ['music', '音楽', 'audio']], ['ゲーム', ['game', 'ゲーム', 'playstation', 'nintendo']],
+        ['学び', ['school', 'learn', '学習', '講座', '英語']], ['からだ', ['fitness', 'gym', '健康', 'フィットネス']],
+        ['マンガ', ['comic', 'manga', 'マンガ', '漫画']], ['クラウド', ['cloud', 'storage', 'クラウド', 'ストレージ']],
+        ['通信', ['mobile', 'wifi', '通信', '携帯']], ['ほけん', ['insurance', '保険']],
+        ['ごはん', ['food', 'meal', 'フード', '宅配', 'ごはん']], ['ニュース', ['news', '新聞', 'ニュース']]
+      ];
+
+      const loginButton = document.querySelector('#login');
+      const progress = document.querySelector('#progress');
+      const status = document.querySelector('#status');
+      const progressBar = document.querySelector('.bar');
+      const barFill = document.querySelector('#bar-fill');
+      const results = document.querySelector('#results');
+      const resultList = document.querySelector('#result-list');
+      const resultSummary = document.querySelector('#result-summary');
+      const empty = document.querySelector('#empty');
+      const saveButton = document.querySelector('#save');
+      const errorBox = document.querySelector('#error-box');
+      const errorMessage = document.querySelector('#error-message');
+      let detectedSubscriptions = [];
+
+      function setProgress(message, percent) {
+        status.textContent = message;
+        const safePercent = Math.max(0, Math.min(100, percent));
+        barFill.style.width = `${safePercent}%`;
+        progressBar.setAttribute('aria-valuenow', String(Math.round(safePercent)));
+      }
+
+      function showError(error) {
+        console.error(error);
+        progress.hidden = true;
+        results.hidden = true;
+        errorBox.hidden = false;
+        loginButton.disabled = false;
+        loginButton.textContent = 'もう一度ログインしてスキャン';
+        const code = error && (error.status || error.code);
+        errorMessage.textContent = code === 403
+          ? 'Gmailを読む許可を確認できませんでした。テストユーザーのGoogleアカウントで、もう一度お試しください。'
+          : 'うまくGmailにつながりませんでした。時間をおいて試すか、モックの街を見てみてください。';
+      }
+
+      function oauthError(details) {
+        const error = new Error(details && details.type ? details.type : 'Googleログインがキャンセルされました');
+        error.code = details && details.type;
+        showError(error);
+      }
+
+      loginButton.addEventListener('click', () => {
+        errorBox.hidden = true;
+        results.hidden = true;
+        progress.hidden = false;
+        loginButton.disabled = true;
+        setProgress('Googleに接続しています…', 7);
+        if (GOOGLE_CLIENT_ID === 'REPLACE_ME') {
+          showError(new Error('Google OAuthのクライアントIDが未設定です'));
+          return;
+        }
+        if (!window.google || !google.accounts || !google.accounts.oauth2) {
+          showError(new Error('Google Identity Servicesを読み込めませんでした'));
+          return;
+        }
+        const tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: GMAIL_SCOPE,
+          callback: response => {
+            if (response.error || !response.access_token) {
+              oauthError({ type: response.error || 'access_token_missing' });
+              return;
+            }
+            scanGmail(response.access_token).catch(showError);
+          },
+          error_callback: oauthError
+        });
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      });
+
+      async function gmailFetch(path, token) {
+        const response = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) {
+          const error = new Error(`Gmail API error: ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+        return response.json();
+      }
+
+      async function scanGmail(token) {
+        setProgress('請求メールの候補を探しています…', 14);
+        const lists = await Promise.all(SEARCH_QUERIES.map(query =>
+          gmailFetch(`?q=${encodeURIComponent(query)}&maxResults=100`, token)
+        ));
+        const seen = new Set();
+        const messageIds = [];
+        lists.forEach(list => (list.messages || []).forEach(message => {
+          if (!seen.has(message.id) && messageIds.length < MAX_MESSAGES) {
+            seen.add(message.id);
+            messageIds.push(message.id);
+          }
+        }));
+
+        if (!messageIds.length) {
+          renderResults([]);
+          return;
+        }
+
+        const messages = new Array(messageIds.length);
+        let cursor = 0;
+        let completed = 0;
+        const worker = async () => {
+          while (cursor < messageIds.length) {
+            const index = cursor++;
+            messages[index] = await gmailFetch(
+              `/${encodeURIComponent(messageIds[index])}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
+              token
+            );
+            completed += 1;
+            setProgress(`${completed} / ${messageIds.length} 通を確認中…`, 22 + (completed / messageIds.length) * 68);
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENCY, messageIds.length) }, worker));
+        setProgress('サブスク街を組み立てています…', 95);
+        renderResults(aggregateMessages(messages));
+      }
+
+      function getHeader(message, name) {
+        const headers = message.payload && message.payload.headers ? message.payload.headers : [];
+        const found = headers.find(header => header.name.toLowerCase() === name.toLowerCase());
+        return found ? found.value : '';
+      }
+
+      function getDomain(from) {
+        const address = (from.match(/<([^>]+)>/) || from.match(/[\w.+-]+@[\w.-]+/i) || [])[1] || (from.match(/[\w.+-]+@[\w.-]+/i) || [])[0] || '';
+        return address.split('@').pop().toLowerCase().replace(/^mail\./, '');
+      }
+
+      function matchesDomain(domain, candidates) {
+        return candidates.some(candidate => domain === candidate || domain.endsWith(`.${candidate}`));
+      }
+
+      function classify(from, subject) {
+        const domain = getDomain(from);
+        const haystack = `${from} ${subject}`.toLowerCase();
+        const rule = SERVICE_RULES.find(item =>
+          matchesDomain(domain, item.domains) && (!item.words || item.words.some(word => haystack.includes(word)))
+        );
+        if (rule) return { name: rule.name, genre: rule.genre };
+
+        const genreRule = GENRE_WORDS.find(([, words]) => words.some(word => haystack.includes(word)));
+        const genre = genreRule ? genreRule[0] : 'そのほか';
+        const senderName = from.replace(/<[^>]*>/g, '').replace(/["']/g, '').trim();
+        const domainName = domain.split('.').slice(0, -1).join('.') || domain;
+        return { name: senderName || domainName || '名称不明のサービス', genre };
+      }
+
+      function extractPrice(subject, snippet) {
+        const text = `${subject} ${snippet || ''}`;
+        const matches = [...text.matchAll(/(?:¥|￥)?\s*([0-9,]{3,6})\s*円?/g)];
+        const prices = matches.map(match => Number(match[1].replace(/,/g, ''))).filter(price => price >= 100 && price <= 300000);
+        return prices.length ? prices[0] : null;
+      }
+
+      function aggregateMessages(messages) {
+        const services = new Map();
+        messages.forEach(message => {
+          const from = getHeader(message, 'From');
+          const subject = getHeader(message, 'Subject');
+          const date = new Date(getHeader(message, 'Date'));
+          const classification = classify(from, subject);
+          const key = classification.name.toLowerCase();
+          if (!services.has(key)) {
+            services.set(key, { ...classification, monthsSeen: new Set(), priceSamples: [] });
+          }
+          const service = services.get(key);
+          if (!Number.isNaN(date.getTime())) {
+            service.monthsSeen.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+          }
+          const price = extractPrice(subject, message.snippet);
+          if (price !== null) service.priceSamples.push({ price, time: Number.isNaN(date.getTime()) ? 0 : date.getTime() });
+        });
+
+        return [...services.values()].map(service => {
+          const genreInfo = GENRES[service.genre] || GENRES['そのほか'];
+          service.priceSamples.sort((a, b) => b.time - a.time);
+          return {
+            name: service.name,
+            icon: genreInfo.icon,
+            genre: service.genre,
+            contracted: true,
+            price: service.priceSamples.length ? service.priceSamples[0].price : genreInfo.price,
+            months: Math.min(36, Math.max(1, service.monthsSeen.size))
+          };
+        }).sort((a, b) => b.price - a.price || a.name.localeCompare(b.name, 'ja'));
+      }
+
+      function renderResults(subscriptions) {
+        detectedSubscriptions = subscriptions;
+        progress.hidden = true;
+        results.hidden = false;
+        loginButton.hidden = true;
+        empty.hidden = subscriptions.length > 0;
+        saveButton.textContent = subscriptions.length ? 'この内容で街を建てる🏙️' : 'モックの街を見てみる🏙️';
+        resultList.replaceChildren();
+        subscriptions.forEach((sub, index) => {
+          const label = document.createElement('label');
+          label.className = 'sub';
+          label.innerHTML = `
+            <span class="sub-icon" aria-hidden="true">${sub.icon}</span>
+            <span><span class="sub-name"></span><span class="sub-meta"></span></span>
+            <span><span class="sub-price"></span><input type="checkbox" data-index="${index}" checked aria-label="このサービスを街に含める"></span>`;
+          label.querySelector('.sub-name').textContent = sub.name;
+          label.querySelector('.sub-meta').textContent = `${sub.genre}・${sub.months}か月観測`;
+          label.querySelector('.sub-price').textContent = `月 ¥${sub.price.toLocaleString('ja-JP')}`;
+          resultList.appendChild(label);
+        });
+        updateSummary();
+        resultList.querySelectorAll('input').forEach(input => input.addEventListener('change', updateSummary));
+      }
+
+      function updateSummary() {
+        const checked = [...resultList.querySelectorAll('input:checked')];
+        const total = checked.reduce((sum, input) => sum + detectedSubscriptions[Number(input.dataset.index)].price, 0);
+        resultSummary.textContent = `${checked.length}件・月 ¥${total.toLocaleString('ja-JP')}`;
+      }
+
+      saveButton.addEventListener('click', () => {
+        if (!detectedSubscriptions.length) {
+          location.href = './index.html';
+          return;
+        }
+        const checked = new Set([...resultList.querySelectorAll('input:checked')].map(input => Number(input.dataset.index)));
+        const subs = detectedSubscriptions.filter((sub, index) => checked.has(index)).map(sub => ({
+          name: sub.name, icon: sub.icon, genre: sub.genre, contracted: true, price: sub.price, months: sub.months
+        }));
+        localStorage.setItem('zencut-scan', JSON.stringify({ at: Date.now(), subs }));
+        // ステージ運用: 実データはスキャン画面で見せるに留め、街はデモ(モック)へ飛ばす
+        location.href = './index.html?mock=1';
+      });
+    })();
+  </script>
+</body>
+</html>
