@@ -530,7 +530,18 @@
         Math.abs(x - district.center[0]) < district.size[0] / 2 + .2 &&
         Math.abs(z - district.center[1]) < district.size[1] / 2 + .2
       );
+      // 惑星のランドマーク(湖・山・農園・村・花畑)の予定地。木はここを避ける
+      const featureZones = [
+        { x: 2, z: 16, r: 4.4 },
+        { x: 10.5, z: -4.5, r: 2.3 },
+        { x: -13.5, z: -8, r: 3.6 },
+        { x: -14.5, z: 7, r: 3.4 },
+        { x: 6, z: 20.5, r: 3.2 },
+        { x: 15, z: 11.5, r: 2.8 }
+      ];
+      const inFeature = (x, z) => featureZones.some(zone => Math.hypot(x - zone.x, z - zone.z) < zone.r);
       function plantTree(x, z, variant) {
+        if (inFeature(x, z)) return;
         const tree = new THREE.Group();
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
         trunk.position.y = .15;
@@ -555,6 +566,125 @@
         plantTree(x, z, i);
         planted += 1;
       }
+
+      // ---- 惑星のランドマーク: 回すと出会える風景たち ----
+      const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x8e9096, roughness: .95 });
+      const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f7fa, roughness: .6 });
+
+      // 球面に沿って湾曲させた矩形パッチ(農園などブロブにしたくないもの用)
+      function bentPlaneGeometry(width, depth, segments = 8) {
+        const geometry = new THREE.PlaneGeometry(width, depth, segments, segments);
+        const position = geometry.attributes.position;
+        for (let i = 0; i < position.count; i += 1) {
+          const vx = position.getX(i), vy = position.getY(i);
+          position.setZ(i, -(vx * vx + vy * vy) / (2 * PLANET_RADIUS));
+        }
+        geometry.computeVertexNormals();
+        return geometry;
+      }
+
+      function createLake(x, z, size) {
+        const shore = new THREE.Mesh(
+          createDistrictZoneGeometry(size * 1.45, size * 1.18),
+          new THREE.MeshStandardMaterial({ color: 0xd9c98a, roughness: .95 })
+        );
+        placeOnPlanet(shore, x, z, .012);
+        shore.rotateX(-Math.PI / 2);
+        const water = new THREE.Mesh(
+          createDistrictZoneGeometry(size, size * .8),
+          new THREE.MeshStandardMaterial({ color: 0x3fa2dd, roughness: .16, metalness: .06 })
+        );
+        placeOnPlanet(water, x, z, .035);
+        water.rotateX(-Math.PI / 2);
+        for (let i = 0; i < 5; i += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(.13 + Math.random() * .16), rockMaterial);
+          rock.castShadow = true;
+          placeOnPlanet(rock, x + Math.cos(angle) * size * .72, z + Math.sin(angle) * size * .6, .04);
+        }
+      }
+
+      function createMountains(x, z) {
+        for (let i = 0; i < 5; i += 1) {
+          const height = 1.1 + Math.random() * 1.6;
+          const peak = new THREE.Group();
+          const rock = new THREE.Mesh(new THREE.ConeGeometry(.5 + height * .45, height, 7), rockMaterial);
+          rock.position.y = height / 2;
+          rock.castShadow = true;
+          peak.add(rock);
+          const snow = new THREE.Mesh(new THREE.ConeGeometry(.16 + height * .13, height * .26, 7), snowMaterial);
+          snow.position.y = height * .87;
+          peak.add(snow);
+          placeOnPlanet(peak, x + (Math.random() - .5) * 3.6, z + (Math.random() - .5) * 3.2, 0);
+        }
+      }
+
+      function createFarm(x, z) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        const rowColors = ['#7d9a45', '#8a6a3f', '#6f9a3d', '#96754a'];
+        for (let i = 0; i < 8; i += 1) {
+          ctx.fillStyle = rowColors[i % rowColors.length];
+          ctx.fillRect(0, i * 8, 64, 8);
+        }
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const field = new THREE.Mesh(bentPlaneGeometry(3.9, 2.9), new THREE.MeshStandardMaterial({ map: texture, roughness: .92 }));
+        placeOnPlanet(field, x, z, .02);
+        field.rotateX(-Math.PI / 2);
+        field.rotateZ(.4);
+        createHouse(x + 2.2, z - 1.4, 1.25, 0xc94f3e);
+      }
+
+      const houseBodyColors = [0xf2e3c2, 0xe8b57c, 0xd8756a, 0xc9dbe8];
+      function createHouse(x, z, scale = 1, bodyColor) {
+        const house = new THREE.Group();
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(.58, .42, .5),
+          new THREE.MeshStandardMaterial({ color: bodyColor ?? houseBodyColors[Math.floor(Math.random() * houseBodyColors.length)], roughness: .82 })
+        );
+        body.position.y = .21;
+        body.castShadow = true;
+        house.add(body);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(.46, .34, 4), new THREE.MeshStandardMaterial({ color: 0xa8523d, roughness: .78 }));
+        roof.position.y = .59;
+        roof.rotation.y = Math.PI / 4;
+        roof.castShadow = true;
+        house.add(roof);
+        house.scale.setScalar(scale);
+        placeOnPlanet(house, x, z, 0);
+        house.rotateY(Math.random() * Math.PI * 2);
+      }
+
+      function createVillage(x, z) {
+        for (let i = 0; i < 6; i += 1) {
+          const angle = i / 6 * Math.PI * 2 + Math.random() * .5;
+          const radius = .9 + Math.random() * 1.3;
+          createHouse(x + Math.cos(angle) * radius, z + Math.sin(angle) * radius, .9 + Math.random() * .4);
+        }
+      }
+
+      function createMeadow(x, z) {
+        const flowerColors = [0xff8fb3, 0xffe066, 0xffffff, 0xff9a5c];
+        for (let i = 0; i < 36; i += 1) {
+          const flower = new THREE.Mesh(
+            new THREE.SphereGeometry(.055 + Math.random() * .04, 6, 5),
+            new THREE.MeshStandardMaterial({ color: flowerColors[i % flowerColors.length], roughness: .6, emissive: flowerColors[i % flowerColors.length], emissiveIntensity: .12 })
+          );
+          const angle = Math.random() * Math.PI * 2;
+          const radius = Math.sqrt(Math.random()) * 2.3;
+          placeOnPlanet(flower, x + Math.cos(angle) * radius, z + Math.sin(angle) * radius, .06);
+        }
+      }
+
+      // featureZonesの座標と対応させて配置(木はそこを避けて生えている)
+      createLake(2, 16, 4.6);
+      createLake(10.5, -4.5, 2.1);
+      createMountains(-13.5, -8);
+      createFarm(-14.5, 7);
+      createVillage(6, 20.5);
+      createMeadow(15, 11.5);
 
       // 昼空: 星の代わりにぽっかり浮かぶ雲
       const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .88, fog: false });
@@ -587,7 +717,6 @@
       let savedMonthly = 0;
       let destroyedCount = 0;
       let cameraShake = 0;
-      let lastHitAt = -Infinity;
       let listening = false;
       let started = false;
       let openingRunning = false;
@@ -716,6 +845,58 @@
         building.userData.duplicateBadge = badge;
       }
 
+      // 怒れる住人: サブスクが重複している街区の路上に現れて抗議する
+      const angryResidents = [];
+      const residentSkinMaterial = new THREE.MeshStandardMaterial({ color: 0xf2c49b, roughness: .72 });
+      const residentClothesColors = [0xe2574b, 0x3f7fd2, 0x4fa15a, 0xd9a03c, 0x9a5fd0];
+      function createAngryMark() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.font = '104px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('💢', 64, 70);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+        mark.scale.set(.42, .42, 1);
+        mark.position.y = .78;
+        return mark;
+      }
+      function createAngryResident(district, offset, index) {
+        const resident = new THREE.Group();
+        const clothes = new THREE.MeshStandardMaterial({ color: residentClothesColors[(index + district.genre.length) % residentClothesColors.length], roughness: .78 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(.1, .15, .34, 8), clothes);
+        body.position.y = .19; body.castShadow = true; resident.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(.12, 10, 8), residentSkinMaterial);
+        head.position.y = .48; resident.add(head);
+        [-1, 1].forEach(side => {
+          const arm = new THREE.Mesh(new THREE.CylinderGeometry(.032, .04, .24, 6), clothes);
+          arm.position.set(side * .17, .36, 0);
+          arm.rotation.z = side * -.52; // 両腕を振り上げた抗議ポーズ
+          resident.add(arm);
+          const fist = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), residentSkinMaterial);
+          fist.position.set(side * .23, .47, 0);
+          resident.add(fist);
+        });
+        const mark = createAngryMark();
+        resident.add(mark);
+        placeOnPlanet(resident, district.center[0] + offset[0], district.center[1] + offset[1], 0);
+        resident.rotateY(Math.random() * Math.PI * 2);
+        resident.visible = false;
+        resident.userData = {
+          genre: district.genre,
+          phase: Math.random() * 6.3,
+          basePosition: resident.position.clone(),
+          up: resident.position.clone().normalize(),
+          baseQuaternion: resident.quaternion.clone(),
+          mark
+        };
+        angryResidents.push(resident);
+      }
+      districts.forEach(district => {
+        [[-.7, .05], [.8, -.12], [.05, .95]].forEach((offset, index) => createAngryResident(district, offset, index));
+      });
+
       function updateDuplicateBadges() {
         const activeByGenre = {};
         buildings.forEach(building => {
@@ -726,6 +907,9 @@
           const { sub, destroyed, duplicateBadge } = building.userData;
           if (!duplicateBadge && sub.contracted) createDuplicateBadge(building);
           if (building.userData.duplicateBadge) building.userData.duplicateBadge.visible = !destroyed && activeByGenre[sub.genre] >= 2;
+        });
+        angryResidents.forEach(resident => {
+          resident.visible = (activeByGenre[resident.userData.genre] || 0) >= 2;
         });
       }
       updateDuplicateBadges();
@@ -1259,11 +1443,15 @@
         checkAllDecided();
       }
 
+      // 振っている間はタイマーを延長し続け、振り終わりから0.5秒おいて爆破演出を出す
+      let pendingHitTimer = null;
       function triggerHit() {
-        const now = performance.now();
-        if (now - lastHitAt < 500) return;
-        lastHitAt = now;
-        if (selected && !selected.userData.destroyed && destroyArmed) demolish(selected);
+        if (!selected || selected.userData.destroyed || !destroyArmed) return;
+        if (pendingHitTimer) clearTimeout(pendingHitTimer);
+        pendingHitTimer = setTimeout(() => {
+          pendingHitTimer = null;
+          if (selected && !selected.userData.destroyed && destroyArmed) demolish(selected);
+        }, 500);
       }
 
       function handleMotion(event) {
@@ -1350,6 +1538,16 @@
             keepDecoration.scale.setScalar(Math.max(.01, keepAge * keepBounce));
             keepDecoration.rotation.y = time * .35;
           }
+        });
+        angryResidents.forEach(resident => {
+          if (!resident.visible) return;
+          const { phase, basePosition, up, baseQuaternion, mark } = resident.userData;
+          const hop = Math.abs(Math.sin(time * 5.2 + phase)) * .14;
+          resident.position.copy(basePosition).addScaledVector(up, hop);
+          resident.quaternion.copy(baseQuaternion);
+          resident.rotateZ(Math.sin(time * 16 + phase) * .09);
+          const pulse = 1 + Math.sin(time * 9 + phase) * .18;
+          mark.scale.set(.42 * pulse, .42 * pulse, 1);
         });
         for (let i = particles.length - 1; i >= 0; i -= 1) {
           const particle = particles[i];
