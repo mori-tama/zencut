@@ -39,6 +39,23 @@
     }
     #start:active { transform: translateY(5px); box-shadow: 0 3px 0 #b15b2d; }
 
+    #opening {
+      position: fixed; z-index: 19; inset: 0; display: grid; place-items: center; padding: 24px;
+      background: radial-gradient(circle at 50% 42%, rgba(78,62,151,.96), rgba(12,9,42,.98) 66%);
+      opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .3s, background .45s;
+    }
+    #opening.visible { opacity: 1; visibility: visible; pointer-events: auto; }
+    #opening.building { background: rgba(12,9,42,.08); }
+    .scan-card {
+      width: min(88vw, 390px); padding: 25px 22px; border: 1px solid rgba(255,255,255,.24); border-radius: 26px;
+      text-align: center; background: rgba(26,20,71,.87); box-shadow: 0 18px 55px rgba(0,0,0,.42); backdrop-filter: blur(12px);
+    }
+    #opening.building .scan-card { transform: translateY(31vh) scale(.84); background: rgba(25,18,67,.72); }
+    #scan-message { margin: 0; font-size: clamp(1.15rem, 5vw, 1.6rem); font-weight: 1000; }
+    #mail-count { margin: 14px 0 5px; color: var(--gold); font-size: 2.6rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
+    #mail-label { margin: 0; color: #ded7f3; font-size: .84rem; }
+    #skip-note { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); color: rgba(255,255,255,.65); font-size: .72rem; }
+
     #hud {
       position: fixed; z-index: 5; top: 0; left: 0; right: 0; pointer-events: none;
       padding: max(10px, env(safe-area-inset-top)) 12px 0;
@@ -84,6 +101,13 @@
 
     #flash { position: fixed; z-index: 7; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle, #fffde0, #ffbf24 28%, #ff4d00 58%, transparent 73%); mix-blend-mode: screen; }
     #flash.go { animation: flash .44s ease-out; }
+    #cancel-stamp {
+      position: fixed; z-index: 14; top: 44%; left: 50%; padding: 8px 18px; border: 7px double #e52c35; border-radius: 12px;
+      color: #e52c35; background: rgba(255,245,221,.9); font-size: clamp(2.8rem, 15vw, 5.8rem); font-weight: 1000;
+      letter-spacing: .08em; line-height: 1; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4);
+      text-shadow: 2px 2px 0 rgba(255,255,255,.8); box-shadow: 0 4px 18px rgba(75,0,12,.4);
+    }
+    #cancel-stamp.go { animation: stamp-in .8s cubic-bezier(.15,.85,.2,1); }
 
     #celebration {
       position: fixed; z-index: 15; inset: 0; display: grid; place-items: center; padding: 24px;
@@ -101,6 +125,13 @@
     @keyframes bump { 35% { transform: scale(1.38) rotate(-2deg); color: #fff; } }
     @keyframes pulse { 50% { transform: scale(1.04); filter: brightness(1.3); } }
     @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes stamp-in {
+      0% { opacity: 0; transform: translate(-50%, -50%) rotate(-17deg) scale(2.4); }
+      16% { opacity: 1; transform: translate(-50%, -50%) rotate(-10deg) scale(.84); }
+      29% { transform: translate(-50%, -50%) rotate(-12deg) scale(1); }
+      78% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(1.04); }
+    }
     @keyframes rise { from { transform: translateY(50px) scale(.7); opacity: 0; } }
     @media (min-width: 720px) { #hint { font-size: .8rem; } }
   </style>
@@ -108,9 +139,18 @@
 <body>
   <div id="stage" aria-label="サブスクリプションのビル街"></div>
 
+  <section id="opening" aria-live="polite">
+    <div class="scan-card">
+      <p id="scan-message">📩 Gmailをスキャン中…</p>
+      <div id="mail-count">0</div>
+      <p id="mail-label">請求メールを確認しています</p>
+    </div>
+    <div id="skip-note">画面をタップしてスキップ</div>
+  </section>
+
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">契約中 <span id="active-count">7本</span>　月額合計 <span id="contract-total">¥15,010</span></div>
+      <div class="counter-main">契約中 <span id="active-count">10本</span>　月額合計 <span id="contract-total">¥22,180</span></div>
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
@@ -127,6 +167,7 @@
     <p id="sheet-action" hidden>📱 振りかぶって叩きつけろ！</p>
   </aside>
   <div id="flash"></div>
+  <div id="cancel-stamp" aria-hidden="true">解約!</div>
 
   <section id="celebration" aria-live="assertive">
     <div class="celebrate-card">
@@ -150,29 +191,40 @@
       'use strict';
 
       const districts = [
-        { genre: '動画', name: '動画街', color: 0x713c62, center: [-5.1, -1.45], size: [3.4, 3.2] },
-        { genre: '音楽', name: '音楽街', color: 0x315b83, center: [0, -3.15], size: [4.2, 2.4] },
-        { genre: 'ゲーム', name: 'ゲーム街', color: 0x563d80, center: [5.05, -1.45], size: [3.2, 3.0] },
-        { genre: '学び', name: '学び街', color: 0x795239, center: [-3.05, 2.25], size: [4.2, 2.8] },
-        { genre: 'からだ', name: 'からだ街', color: 0x28695c, center: [3.4, 2.25], size: [3.5, 2.8] }
+        { genre: 'AI', name: 'AI街', center: [-5.25, -3.65], size: [4.35, 3.8] },
+        { genre: '動画', name: '動画街', center: [0, -3.65], size: [4.85, 3.8] },
+        { genre: '音楽', name: '音楽街', center: [5.25, -3.65], size: [4.35, 3.8] },
+        { genre: 'ゲーム', name: 'ゲーム街', center: [-5.25, 2.05], size: [4.35, 3.65] },
+        { genre: '学び', name: '学び街', center: [0, 2.05], size: [4.35, 3.65] },
+        { genre: 'からだ', name: 'からだ街', center: [5.25, 2.05], size: [4.35, 3.65] }
       ];
       const subscriptions = [
-        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 2400, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-5.75, -2.05] },
-        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [-4.45, -2.05] },
-        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.75, -.75] },
-        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.45, -.75] },
-        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [-1.35, -3.15] },
-        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [0, -3.15] },
-        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -3.15] },
-        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [4.45, -1.65] },
-        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [5.75, -1.65] },
-        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-4.35, 2.25] },
-        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-3.05, 2.25] },
-        { name: 'BRAINGO', icon: '🧠', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-1.75, 2.25] },
-        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [2.75, 2.25] },
-        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [4.05, 2.25] }
+        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.6, -4.35] },
+        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.25, -4.35] },
+        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-3.9, -4.35] },
+        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.95, -2.95] },
+        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.55, -2.95] },
+        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -4.35] },
+        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -4.35] },
+        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -4.35] },
+        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -2.95] },
+        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -2.95] },
+        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -2.95] },
+        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.55, -4.35] },
+        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [5.95, -4.35] },
+        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.55, -2.95] },
+        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [5.95, -2.95] },
+        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-6.6, 1.65] },
+        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-5.25, 1.65] },
+        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-3.9, 1.65] },
+        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-1.35, 1.65] },
+        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [0, 1.65] },
+        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [1.35, 1.65] },
+        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [3.9, 1.65] },
+        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.25, 1.65] },
+        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.6, 1.65] }
       ];
-      const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2'];
+      const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const audioContext = AudioContextClass ? new AudioContextClass() : null;
@@ -189,6 +241,10 @@
       });
       const audioBuffersReady = Promise.allSettled(audioBufferLoads);
       const stage = document.querySelector('#stage');
+      const opening = document.querySelector('#opening');
+      const scanMessage = document.querySelector('#scan-message');
+      const mailCount = document.querySelector('#mail-count');
+      const mailLabel = document.querySelector('#mail-label');
       const sheet = document.querySelector('#sheet');
       const sheetTitle = document.querySelector('#sheet-title');
       const sheetDetail = document.querySelector('#sheet-detail');
@@ -202,6 +258,7 @@
       const activeCountOutput = document.querySelector('#active-count');
       const contractTotalOutput = document.querySelector('#contract-total');
       const flash = document.querySelector('#flash');
+      const cancelStamp = document.querySelector('#cancel-stamp');
       const motionStatus = document.querySelector('#motion-status');
       const celebration = document.querySelector('#celebration');
       const celebrationSaving = document.querySelector('#celebration-saving');
@@ -211,10 +268,15 @@
       const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x4c286d, 24, 48);
-      const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, .1, 100);
-      camera.position.set(0, 14.2, innerWidth / innerHeight < .7 ? 39 : 29);
-      camera.lookAt(0, 2.4, 0);
+      scene.fog = new THREE.Fog(0x4c286d, 34, 70);
+      const camera = new THREE.PerspectiveCamera(innerWidth / innerHeight < .7 ? 52 : 42, innerWidth / innerHeight, .1, 100);
+      const CAMERA_AZIMUTH = THREE.MathUtils.degToRad(40);
+      const CAMERA_ELEVATION = THREE.MathUtils.degToRad(50);
+      const isoCameraDirection = new THREE.Vector3(
+        Math.sin(CAMERA_AZIMUTH) * Math.cos(CAMERA_ELEVATION),
+        Math.sin(CAMERA_ELEVATION),
+        Math.cos(CAMERA_AZIMUTH) * Math.cos(CAMERA_ELEVATION)
+      );
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
@@ -234,45 +296,77 @@
       scene.add(purpleLight);
 
       const ground = new THREE.Mesh(
-        new THREE.CylinderGeometry(10.5, 11.3, .75, 8),
+          new THREE.CylinderGeometry(12.5, 13.2, .75, 8),
         new THREE.MeshStandardMaterial({ color: 0x24365b, roughness: .72, metalness: .12 })
       );
       ground.position.y = -.42;
       ground.receiveShadow = true;
       scene.add(ground);
       const plaza = new THREE.Mesh(
-        new THREE.CylinderGeometry(8.8, 9.2, .12, 8),
+          new THREE.CylinderGeometry(11.4, 11.9, .12, 8),
         new THREE.MeshStandardMaterial({ color: 0x55416f, roughness: .83 })
       );
       plaza.position.y = .02;
       plaza.receiveShadow = true;
       scene.add(plaza);
 
-      function createDistrictLabel(district) {
+      const districtMonthly = genre => subscriptions
+        .filter(sub => sub.genre === genre && sub.contracted)
+        .reduce((sum, sub) => sum + sub.price, 0);
+      const districtTotals = districts.map(district => districtMonthly(district.genre));
+      const districtMin = Math.min(...districtTotals);
+      const districtMax = Math.max(...districtTotals);
+
+      function districtHeat(monthly) {
+        const heat = districtMax === districtMin ? 0 : (monthly - districtMin) / (districtMax - districtMin);
+        const easedHeat = Math.pow(heat, .72);
+        return {
+          heat,
+          color: new THREE.Color(0x355f7a).lerp(new THREE.Color(0x96505b), easedHeat),
+          background: `rgba(${Math.round(48 + easedHeat * 88)}, ${Math.round(60 - easedHeat * 11)}, ${Math.round(92 - easedHeat * 18)}, .94)`
+        };
+      }
+
+      function createDistrictLabel(district, monthly, heatStyle) {
         const canvas = document.createElement('canvas');
-        canvas.width = 384; canvas.height = 128;
+        canvas.width = 640; canvas.height = 160;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#241849'; ctx.fillRect(0, 0, 384, 128);
-        ctx.strokeStyle = '#ffe07a'; ctx.lineWidth = 9; ctx.strokeRect(5, 5, 374, 118);
-        ctx.fillStyle = '#fff8db'; ctx.font = '900 55px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(district.name, 192, 66);
+        ctx.fillStyle = heatStyle.background; ctx.fillRect(0, 0, 640, 160);
+        ctx.strokeStyle = heatStyle.heat > .7 ? '#ffb7a5' : '#c8dcf2';
+        ctx.lineWidth = 10; ctx.strokeRect(5, 5, 630, 150);
+        ctx.fillStyle = '#fff8ed'; ctx.font = '900 52px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`${district.name} ${formatYen(monthly)}/月`, 320, 82);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
-        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
-        label.scale.set(1.85, .62, 1);
-        label.position.set(district.center[0], .62, district.center[1] + district.size[1] / 2 - .15);
+        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+        label.scale.set(3.15, .79, 1);
+        label.position.set(district.center[0], 1.05, district.center[1] + district.size[1] / 2 - .08);
         return label;
       }
 
       districts.forEach(district => {
+        const monthly = districtMonthly(district.genre);
+        const heatStyle = districtHeat(monthly);
         const tile = new THREE.Mesh(
           new THREE.BoxGeometry(district.size[0], .14, district.size[1]),
-          new THREE.MeshStandardMaterial({ color: district.color, roughness: .72, metalness: .08 })
+          new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .76, metalness: .06 })
         );
         tile.position.set(district.center[0], .13, district.center[1]);
         tile.receiveShadow = true;
         scene.add(tile);
-        scene.add(createDistrictLabel(district));
+        scene.add(createDistrictLabel(district, monthly, heatStyle));
+      });
+
+      const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x283247, roughness: .92 });
+      [
+        { size: [16.3, .08, .65], position: [0, .075, -.75] },
+        { size: [.48, .08, 9.8], position: [-2.75, .075, -1.05] },
+        { size: [.48, .08, 9.8], position: [2.75, .075, -1.05] }
+      ].forEach(road => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...road.size), roadMaterial);
+        mesh.position.set(...road.position);
+        mesh.receiveShadow = true;
+        scene.add(mesh);
       });
 
       const starGeometry = new THREE.BufferGeometry();
@@ -284,7 +378,6 @@
       const buildings = [];
       const clickableMeshes = [];
       const particles = [];
-      const sprouts = [];
       const treePartyCoins = [];
       const savingsTree = new THREE.Group();
       const treeGold = new THREE.MeshStandardMaterial({ color: 0xffc52f, emissive: 0xff8b0b, emissiveIntensity: 1.15, metalness: .42, roughness: .3 });
@@ -301,9 +394,21 @@
       let lastHitAt = -Infinity;
       let listening = false;
       let started = false;
+      let openingRunning = false;
+      let openingInterval = null;
+      const openingTimers = [];
+      let treeVisible = false;
+      let cameraDistance = innerWidth / innerHeight < .7 ? 42 : 34;
+      let pinchActive = false;
+      let pinchStartDistance = 0;
+      let pinchStartCameraDistance = cameraDistance;
+      let suppressTapUntil = 0;
+      let viewTween = null;
+      const cameraView = { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: -.8 };
 
-      function roundedBox(width, height, depth, color, y, bevel = .08) {
-        const geometry = new THREE.BoxGeometry(width, height, depth, 2, 2, 2);
+      function roundedBox(width, height, depth, color, y, bevel = .08, detailed = true) {
+        const segments = detailed ? 2 : 1;
+        const geometry = new THREE.BoxGeometry(width, height, depth, segments, segments, segments);
         const position = geometry.attributes.position;
         for (let i = 0; i < position.count; i += 1) {
           const x = position.getX(i), z = position.getZ(i);
@@ -313,7 +418,7 @@
         geometry.computeVertexNormals();
         const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color, roughness: .58, metalness: .12 }));
         mesh.position.y = y;
-        mesh.castShadow = true;
+        mesh.castShadow = detailed;
         mesh.receiveShadow = true;
         return mesh;
       }
@@ -358,33 +463,36 @@
       function createBuilding(sub, index) {
         const paid = sub.price * sub.months;
         const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
+        const detailed = sub.contracted;
         const group = new THREE.Group();
         group.position.set(sub.position[0], .18, sub.position[1]);
         group.rotation.y = sub.position[0] * -.009;
-        group.userData = { sub, index, destroyed: false, decision: null, baseX: group.position.x, baseY: .18, height, duplicateBadge: null, keepDecoration: null };
+        group.userData = { sub, index, destroyed: false, decision: null, baseX: group.position.x, baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
+        group.scale.setScalar(.01);
 
         const bodyHeight = height - .72;
-        const base = roundedBox(1.14, bodyHeight, 1.05, sub.color, bodyHeight / 2 + .08);
+        const base = roundedBox(1.14, bodyHeight, 1.05, sub.color, bodyHeight / 2 + .08, detailed ? .08 : 0, detailed);
         base.castShadow = sub.contracted;
         base.userData.building = group;
         group.add(base);
         if (sub.contracted) clickableMeshes.push(base);
         group.userData.body = base;
-        addWindows(group, 1.14, bodyHeight, bodyHeight / 2 + .08, sub);
+        if (detailed) addWindows(group, 1.14, bodyHeight, bodyHeight / 2 + .08, sub);
 
-        const upper = roundedBox(1.02, .72, .95, sub.dark, height - .3);
+        const upper = roundedBox(1.02, .72, .95, sub.dark, height - .3, detailed ? .08 : 0, detailed);
         upper.castShadow = sub.contracted;
         upper.userData.building = group;
         group.add(upper);
         if (sub.contracted) clickableMeshes.push(upper);
-        const roof = roundedBox(.82, .18, .76, sub.contracted ? 0x413267 : 0x55545d, height + .14, .04);
+        const roof = roundedBox(.82, .18, .76, sub.contracted ? 0x413267 : 0x55545d, height + .14, detailed ? .04 : 0, detailed);
         roof.castShadow = sub.contracted;
         group.add(roof);
-        const cap = roundedBox(.43, .18, .4, sub.color, height + .32, .03);
-        cap.castShadow = sub.contracted;
-        group.add(cap);
-        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .38, 7), new THREE.MeshStandardMaterial({ color: sub.contracted ? 0xffd75e : 0x77747d, emissive: sub.contracted ? 0xff8a1f : 0x111111, emissiveIntensity: sub.contracted ? 1.5 : 0 }));
-        antenna.position.y = height + .6; group.add(antenna);
+        if (detailed) {
+          const cap = roundedBox(.43, .18, .4, sub.color, height + .32, .03);
+          group.add(cap);
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .38, 7), new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.5 }));
+          antenna.position.y = height + .6; group.add(antenna);
+        }
         const sign = createSign(sub); sign.position.y = height - .3; sign.userData.building = group; group.add(sign);
         if (sub.contracted) clickableMeshes.push(sign);
 
@@ -432,6 +540,95 @@
         contractTotalOutput.textContent = formatYen(active.reduce((sum, building) => sum + building.userData.sub.price, 0));
       }
       updateContractHeader();
+
+      function scheduleOpening(callback, delay) {
+        const timer = setTimeout(callback, delay);
+        openingTimers.push(timer);
+        return timer;
+      }
+
+      function clearOpeningTimers() {
+        openingTimers.forEach(clearTimeout);
+        openingTimers.length = 0;
+        clearInterval(openingInterval);
+        openingInterval = null;
+      }
+
+      function finishOpeningImmediately() {
+        if (!openingRunning) return;
+        clearOpeningTimers();
+        buildings.forEach(building => {
+          building.userData.buildBorn = null;
+          building.scale.setScalar(1);
+        });
+        treeVisible = true;
+        savingsTree.scale.setScalar(1);
+        openingRunning = false;
+        opening.classList.remove('visible', 'building');
+      }
+
+      function beginCityBuild() {
+        if (!openingRunning) return;
+        clearInterval(openingInterval);
+        openingInterval = null;
+        opening.classList.add('building');
+        scanMessage.textContent = '🏙️ サブスク地図を建設中…';
+        mailCount.textContent = String(subscriptions.length);
+        mailLabel.textContent = '見つかったサービスを街に並べています';
+        const buildOrder = districts.flatMap(district =>
+          buildings.filter(building => building.userData.sub.genre === district.genre)
+        );
+        buildOrder.forEach((building, index) => {
+          scheduleOpening(() => {
+            if (!openingRunning) return;
+            building.userData.buildBorn = performance.now();
+            playSound('nyu1', .2);
+          }, index * 100);
+        });
+        const lastBuildingAt = (buildOrder.length - 1) * 100;
+        scheduleOpening(() => {
+          if (!openingRunning) return;
+          treeVisible = true;
+          rebuildSavingsTree(treeStage);
+          playSound('nyu1', .5);
+          scanMessage.textContent = '✨ あなたの街ができました';
+        }, lastBuildingAt + 360);
+        scheduleOpening(() => {
+          if (!openingRunning) return;
+          openingRunning = false;
+          opening.classList.remove('visible', 'building');
+        }, lastBuildingAt + 920);
+      }
+
+      function runOpening() {
+        openingRunning = true;
+        opening.classList.remove('building');
+        opening.classList.add('visible');
+        scanMessage.textContent = '📩 Gmailをスキャン中…';
+        mailCount.textContent = '0';
+        mailLabel.textContent = '請求メールを確認しています';
+        scheduleOpening(() => {
+          let count = 0;
+          openingInterval = setInterval(() => {
+            count = Math.min(subscriptions.length, count + 1);
+            mailCount.textContent = String(count);
+            if (count === subscriptions.length) {
+              clearInterval(openingInterval);
+              openingInterval = null;
+            }
+          }, 45);
+        }, 250);
+        scheduleOpening(() => {
+          scanMessage.textContent = '契約中サブスク 10本 発見';
+          mailLabel.textContent = '同じジャンルの重複も見つかりました';
+        }, 1750);
+        scheduleOpening(beginCityBuild, 2450);
+      }
+
+      opening.addEventListener('pointerup', event => {
+        event.preventDefault();
+        finishOpeningImmediately();
+      });
 
       function addTreePart(geometry, material, position, scale, rotation) {
         const mesh = new THREE.Mesh(geometry, material);
@@ -524,9 +721,32 @@
         }
       }
 
-      savingsTree.position.set(0, .12, 4.15);
+      savingsTree.position.set(0, .12, 5.55);
       scene.add(savingsTree);
       rebuildSavingsTree(0);
+
+      const clampCameraDistance = value => Math.max(20, Math.min(46, value));
+
+      function startCameraTween(building) {
+        const target = building
+          ? { distance: clampCameraDistance(cameraDistance - 6), targetX: building.position.x, targetY: Math.min(2.8, building.userData.height * .42), targetZ: building.position.z }
+          : { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: -.8 };
+        viewTween = {
+          startedAt: performance.now(),
+          duration: 1000,
+          from: { ...cameraView },
+          to: target
+        };
+      }
+
+      function clearSelection() {
+        if (!selected) return;
+        selected.userData.halo.material.opacity = 0;
+        selected = null;
+        destroyArmed = false;
+        sheet.classList.remove('visible');
+        startCameraTween(null);
+      }
 
       function createKeepDecoration(building) {
         if (building.userData.keepDecoration) {
@@ -579,6 +799,7 @@
         selected = building;
         if (!sameBuilding) destroyArmed = false;
         selected.userData.halo.material.opacity = .95;
+        if (!sameBuilding) startCameraTween(building);
         updateSheet();
       }
 
@@ -615,17 +836,46 @@
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2();
       function pick(event) {
+        if (openingRunning || pinchActive || performance.now() < suppressTapUntil) return;
         pointer.x = event.clientX / innerWidth * 2 - 1;
         pointer.y = -(event.clientY / innerHeight) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
         const hit = raycaster.intersectObjects(clickableMeshes, false).find(item => !item.object.userData.building.userData.destroyed);
         if (hit) selectBuilding(hit.object.userData.building);
+        else clearSelection();
       }
       renderer.domElement.addEventListener('pointerup', pick);
       renderer.domElement.addEventListener('dblclick', event => {
         pick(event);
         if (selected) triggerHit();
       });
+
+      function pinchDistance(touches) {
+        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+      }
+
+      renderer.domElement.addEventListener('touchstart', event => {
+        if (event.touches.length !== 2) return;
+        pinchActive = true;
+        pinchStartDistance = pinchDistance(event.touches);
+        pinchStartCameraDistance = cameraDistance;
+        suppressTapUntil = performance.now() + 350;
+        event.preventDefault();
+      }, { passive: false });
+      renderer.domElement.addEventListener('touchmove', event => {
+        if (!pinchActive || event.touches.length !== 2) return;
+        const distance = Math.max(1, pinchDistance(event.touches));
+        cameraDistance = clampCameraDistance(pinchStartCameraDistance * pinchStartDistance / distance);
+        viewTween = null;
+        cameraView.distance = selected ? clampCameraDistance(cameraDistance - 6) : cameraDistance;
+        suppressTapUntil = performance.now() + 350;
+        event.preventDefault();
+      }, { passive: false });
+      renderer.domElement.addEventListener('touchend', event => {
+        if (event.touches.length >= 2) return;
+        if (pinchActive) suppressTapUntil = performance.now() + 350;
+        pinchActive = false;
+      }, { passive: true });
 
       function playSound(name, volume = 1) {
         const buffer = audioBuffers[name];
@@ -673,18 +923,14 @@
         particles.push({ light: burst, life: .42 });
       }
 
-      function createSprout(building) {
-        playSound('nyu1', .82);
-        const group = new THREE.Group();
-        group.position.set(building.position.x, .12, building.position.z);
-        group.scale.setScalar(.01);
-        const gold = new THREE.MeshStandardMaterial({ color: 0xffd633, emissive: 0xffa514, emissiveIntensity: 1.35, metalness: .28, roughness: .3 });
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(.08, .12, 1.25, 8), gold); stem.position.y = .68; group.add(stem);
-        const leafGeometry = new THREE.SphereGeometry(.48, 12, 8);
-        const left = new THREE.Mesh(leafGeometry, gold); left.scale.set(1, .34, .58); left.rotation.z = .5; left.position.set(-.37, 1.18, 0); group.add(left);
-        const right = left.clone(); right.rotation.z = -.5; right.position.x = .37; group.add(right);
-        const glow = new THREE.PointLight(0xffbd31, 18, 5); glow.position.y = 1.1; group.add(glow);
-        scene.add(group); sprouts.push({ group, born: performance.now(), target: 1 });
+      function createVacantLot(building) {
+        const lot = new THREE.Mesh(
+          new THREE.BoxGeometry(1.16, .08, 1.07),
+          new THREE.MeshStandardMaterial({ color: 0x242737, roughness: .96, metalness: 0 })
+        );
+        lot.position.set(building.position.x, .25, building.position.z);
+        lot.receiveShadow = true;
+        scene.add(lot);
       }
 
       function animateSavings(amount) {
@@ -720,7 +966,6 @@
           const stillComplete = contractedBuildings.every(building => building.userData.decision === 'keep' || building.userData.decision === 'destroyed');
           if (!stillComplete) return;
           celebrationShown = true;
-          sprouts.forEach((sprout, index) => { sprout.target = 1.55 + index * .07; });
           createTreeCoinParty();
           celebrationSaving.textContent = `月々 ${formatYen(savedMonthly)} の節約`;
           celebrationAnnual.textContent = savedMonthly > 0
@@ -732,6 +977,14 @@
         }, 1250);
       }
 
+      function showCancelStamp() {
+        cancelStamp.classList.remove('go');
+        void cancelStamp.offsetWidth;
+        cancelStamp.classList.add('go');
+        playSound('drum-japanese1', .92);
+        setTimeout(() => cancelStamp.classList.remove('go'), 800);
+      }
+
       function demolish(building) {
         if (!building || building.userData.destroyed || !destroyArmed) return;
         building.userData.destroyed = true;
@@ -741,14 +994,15 @@
         cameraShake = 1;
         playSound('big-explosion1');
         setTimeout(() => playSound('building-collapse-little1', .48), 300);
+        setTimeout(showCancelStamp, 400);
         flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
         building.visible = false;
         sheet.classList.remove('visible');
-        createSprout(building);
+        createVacantLot(building);
         growSavingsTree();
         animateSavings(building.userData.sub.price);
         destroyedCount += 1;
-        selected = null;
+        clearSelection();
         updateDuplicateBadges();
         updateContractHeader();
         setTimeout(() => playSound('money-drop1', .9), 270);
@@ -800,7 +1054,7 @@
           motionStatus.textContent = '・ダブルクリックでも爆破できます';
         }
         titleScreen.classList.add('hidden');
-        setTimeout(() => selectBuilding(buildings[0]), 850);
+        runOpening();
       }
       startButton.addEventListener('click', startExperience);
 
@@ -809,7 +1063,21 @@
         requestAnimationFrame(render);
         const dt = Math.min(clock.getDelta(), .035);
         const time = now * .001;
+        if (viewTween) {
+          const progress = Math.min(1, (performance.now() - viewTween.startedAt) / viewTween.duration);
+          const eased = progress < .5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          Object.keys(cameraView).forEach(key => {
+            cameraView[key] = viewTween.from[key] + (viewTween.to[key] - viewTween.from[key]) * eased;
+          });
+          if (progress === 1) viewTween = null;
+        }
         buildings.forEach(building => {
+          if (building.userData.buildBorn != null) {
+            const buildAge = Math.min(1, (performance.now() - building.userData.buildBorn) / 340);
+            const buildBounce = 1 + Math.sin(buildAge * Math.PI * 2.5) * (1 - buildAge) * .18;
+            building.scale.setScalar(Math.max(.01, buildAge * buildBounce));
+            if (buildAge === 1) building.userData.buildBorn = null;
+          }
           if (building === selected && !building.userData.destroyed) {
             building.position.x = building.userData.baseX + Math.sin(time * 22) * .055;
             building.rotation.z = Math.sin(time * 18) * .018;
@@ -846,16 +1114,13 @@
             particles.splice(i, 1);
           }
         }
-        sprouts.forEach(sprout => {
-          const age = Math.min(1, (performance.now() - sprout.born) / 520);
-          const bounce = 1 + Math.sin(age * Math.PI * 3) * (1 - age) * .18;
-          const scale = Math.max(.01, age * sprout.target * bounce);
-          sprout.group.scale.setScalar(scale);
-          sprout.group.rotation.y = Math.sin(time * 1.5) * .12;
-        });
-        const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
-        const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
-        savingsTree.scale.setScalar(Math.max(.08, treeAge * treeBounce));
+        if (treeVisible) {
+          const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
+          const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
+          savingsTree.scale.setScalar(Math.max(.08, treeAge * treeBounce));
+        } else {
+          savingsTree.scale.setScalar(.01);
+        }
         savingsTree.rotation.y = Math.sin(time * 1.15) * .045;
         treePartyCoins.forEach(coin => {
           coin.angle += dt * coin.speed;
@@ -868,15 +1133,15 @@
           coin.mesh.rotation.x += dt * 7;
           coin.mesh.rotation.y += dt * 10;
         });
-        if (cameraShake > .01) {
-          camera.position.x = (Math.random() - .5) * cameraShake;
-          camera.position.y = 14.2 + (Math.random() - .5) * cameraShake;
-          cameraShake *= .82;
-        } else {
-          camera.position.x += (0 - camera.position.x) * .1;
-          camera.position.y += (14.2 - camera.position.y) * .1;
-        }
-        camera.lookAt(0, 2.4, 0);
+        const shakeX = cameraShake > .01 ? (Math.random() - .5) * cameraShake : 0;
+        const shakeY = cameraShake > .01 ? (Math.random() - .5) * cameraShake : 0;
+        if (cameraShake > .01) cameraShake *= .82;
+        camera.position.set(
+          cameraView.targetX + isoCameraDirection.x * cameraView.distance + shakeX,
+          cameraView.targetY + isoCameraDirection.y * cameraView.distance + shakeY,
+          cameraView.targetZ + isoCameraDirection.z * cameraView.distance
+        );
+        camera.lookAt(cameraView.targetX, cameraView.targetY, cameraView.targetZ);
         // 0幅で初期化された場合(非表示タブ読込等)の自己修復
         if (renderer.domElement.width === 0 && innerWidth > 0) dispatchEvent(new Event('resize'));
         renderer.render(scene, camera);
@@ -885,7 +1150,7 @@
 
       addEventListener('resize', () => {
         camera.aspect = innerWidth / innerHeight;
-        camera.position.z = camera.aspect < .7 ? 39 : 29;
+        camera.fov = camera.aspect < .7 ? 52 : 42;
         camera.updateProjectionMatrix();
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         renderer.setSize(innerWidth, innerHeight);
