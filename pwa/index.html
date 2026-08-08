@@ -150,7 +150,7 @@
 
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">契約中 <span id="active-count">10本</span>　月額合計 <span id="contract-total">¥22,180</span></div>
+      <div class="counter-main">契約中 <span id="active-count">13本</span>　月額合計 <span id="contract-total">¥24,010</span></div>
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
@@ -191,40 +191,51 @@
       'use strict';
 
       const districts = [
-        { genre: 'AI', name: 'AI街', center: [-5.25, -3.65], size: [4.35, 3.8] },
-        { genre: '動画', name: '動画街', center: [0, -3.65], size: [4.85, 3.8] },
-        { genre: '音楽', name: '音楽街', center: [5.25, -3.65], size: [4.35, 3.8] },
-        { genre: 'ゲーム', name: 'ゲーム街', center: [-5.25, 2.05], size: [4.35, 3.65] },
-        { genre: '学び', name: '学び街', center: [0, 2.05], size: [4.35, 3.65] },
-        { genre: 'からだ', name: 'からだ街', center: [5.25, 2.05], size: [4.35, 3.65] }
+        { genre: 'AI', name: 'AI街', center: [-5.4, 5.7], size: [4.7, 4.6] },
+        { genre: '動画', name: '動画街', center: [0, -5.7], size: [4.9, 4.6] },
+        { genre: '音楽', name: '音楽街', center: [5.4, -5.7], size: [4.7, 4.6] },
+        { genre: 'ゲーム', name: 'ゲーム街', center: [0, 5.7], size: [4.7, 4.6] },
+        { genre: '学び', name: '学び街', center: [-5.4, 0], size: [4.7, 4.6] },
+        { genre: 'からだ', name: 'からだ街', center: [5.4, 5.7], size: [4.7, 4.6] },
+        { genre: 'マンガ', name: 'マンガ街', center: [-5.4, -5.7], size: [4.7, 4.6] },
+        { genre: 'クラウド', name: 'クラウド街', center: [0, 0], size: [4.7, 4.6] },
+        { genre: 'おかいもの', name: 'おかいもの街', center: [5.4, 0], size: [4.7, 4.6] }
       ];
       const subscriptions = [
-        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.6, -4.35] },
-        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.25, -4.35] },
-        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-3.9, -4.35] },
-        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.95, -2.95] },
-        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.55, -2.95] },
-        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -4.35] },
-        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -4.35] },
-        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -4.35] },
-        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -2.95] },
-        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -2.95] },
-        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -2.95] },
-        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.55, -4.35] },
-        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [5.95, -4.35] },
-        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.55, -2.95] },
-        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [5.95, -2.95] },
-        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-6.6, 1.65] },
-        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-5.25, 1.65] },
-        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-3.9, 1.65] },
-        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-1.35, 1.65] },
-        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [0, 1.65] },
-        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [1.35, 1.65] },
-        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [3.9, 1.65] },
-        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.25, 1.65] },
-        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.6, 1.65] }
+        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.75, 5] },
+        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.4, 5] },
+        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-4.05, 5] },
+        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.1, 6.4] },
+        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.7, 6.4] },
+        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -6.4] },
+        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -6.4] },
+        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -6.4] },
+        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -5] },
+        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -5] },
+        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -5] },
+        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.7, -6.4] },
+        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [6.1, -6.4] },
+        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.7, -5] },
+        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [6.1, -5] },
+        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-1.35, 5.3] },
+        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [0, 5.3] },
+        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [1.35, 5.3] },
+        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-6.75, -.4] },
+        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-5.4, -.4] },
+        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-4.05, -.4] },
+        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [4.05, 5.3] },
+        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.4, 5.3] },
+        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.75, 5.3] },
+        { name: 'COMICON', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-6.75, -6.4] },
+        { name: 'INKPOP', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.4, -6.4] },
+        { name: 'TOONBOX', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.05, -6.4] },
+        { name: 'DRIVEBOX', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-1.35, -.4] },
+        { name: 'SYNCLY', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [0, -.4] },
+        { name: 'VAULTIE', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -.4] },
+        { name: 'PRIMEGO', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
+        { name: 'SHOPPLE', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
       ];
-      const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
+      const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'item-get1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const audioContext = AudioContextClass ? new AudioContextClass() : null;
@@ -296,19 +307,13 @@
       scene.add(purpleLight);
 
       const ground = new THREE.Mesh(
-          new THREE.CylinderGeometry(12.5, 13.2, .75, 8),
-        new THREE.MeshStandardMaterial({ color: 0x24365b, roughness: .72, metalness: .12 })
+        new THREE.PlaneGeometry(26, 26),
+        new THREE.MeshStandardMaterial({ color: 0x24365b, roughness: .86, metalness: .08 })
       );
-      ground.position.y = -.42;
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -.02;
       ground.receiveShadow = true;
       scene.add(ground);
-      const plaza = new THREE.Mesh(
-          new THREE.CylinderGeometry(11.4, 11.9, .12, 8),
-        new THREE.MeshStandardMaterial({ color: 0x55416f, roughness: .83 })
-      );
-      plaza.position.y = .02;
-      plaza.receiveShadow = true;
-      scene.add(plaza);
 
       const districtMonthly = genre => subscriptions
         .filter(sub => sub.genre === genre && sub.contracted)
@@ -344,14 +349,32 @@
         return label;
       }
 
+      function createDistrictZoneGeometry(width, depth, radius = .22) {
+        const halfWidth = width / 2;
+        const halfDepth = depth / 2;
+        const corner = Math.min(radius, halfWidth, halfDepth);
+        const shape = new THREE.Shape();
+        shape.moveTo(-halfWidth + corner, -halfDepth);
+        shape.lineTo(halfWidth - corner, -halfDepth);
+        shape.quadraticCurveTo(halfWidth, -halfDepth, halfWidth, -halfDepth + corner);
+        shape.lineTo(halfWidth, halfDepth - corner);
+        shape.quadraticCurveTo(halfWidth, halfDepth, halfWidth - corner, halfDepth);
+        shape.lineTo(-halfWidth + corner, halfDepth);
+        shape.quadraticCurveTo(-halfWidth, halfDepth, -halfWidth, halfDepth - corner);
+        shape.lineTo(-halfWidth, -halfDepth + corner);
+        shape.quadraticCurveTo(-halfWidth, -halfDepth, -halfWidth + corner, -halfDepth);
+        return new THREE.ShapeGeometry(shape);
+      }
+
       districts.forEach(district => {
         const monthly = districtMonthly(district.genre);
         const heatStyle = districtHeat(monthly);
         const tile = new THREE.Mesh(
-          new THREE.BoxGeometry(district.size[0], .14, district.size[1]),
-          new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .76, metalness: .06 })
+          createDistrictZoneGeometry(district.size[0], district.size[1]),
+          new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .82, metalness: .03 })
         );
-        tile.position.set(district.center[0], .13, district.center[1]);
+        tile.rotation.x = -Math.PI / 2;
+        tile.position.set(district.center[0], .012, district.center[1]);
         tile.receiveShadow = true;
         scene.add(tile);
         scene.add(createDistrictLabel(district, monthly, heatStyle));
@@ -359,9 +382,10 @@
 
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x283247, roughness: .92 });
       [
-        { size: [16.3, .08, .65], position: [0, .075, -.75] },
-        { size: [.48, .08, 9.8], position: [-2.75, .075, -1.05] },
-        { size: [.48, .08, 9.8], position: [2.75, .075, -1.05] }
+        { size: [16.6, .08, .46], position: [0, .075, -2.85] },
+        { size: [16.6, .08, .46], position: [0, .075, 2.85] },
+        { size: [.46, .08, 17.3], position: [-2.7, .075, 0] },
+        { size: [.46, .08, 17.3], position: [2.7, .075, 0] }
       ].forEach(road => {
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(...road.size), roadMaterial);
         mesh.position.set(...road.position);
@@ -398,13 +422,13 @@
       let openingInterval = null;
       const openingTimers = [];
       let treeVisible = false;
-      let cameraDistance = innerWidth / innerHeight < .7 ? 42 : 34;
+      let cameraDistance = innerWidth / innerHeight < .7 ? 46 : 38;
       let pinchActive = false;
       let pinchStartDistance = 0;
       let pinchStartCameraDistance = cameraDistance;
       let suppressTapUntil = 0;
       let viewTween = null;
-      const cameraView = { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: -.8 };
+      const cameraView = { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: 0 };
 
       function roundedBox(width, height, depth, color, y, bevel = .08, detailed = true) {
         const segments = detailed ? 2 : 1;
@@ -465,7 +489,7 @@
         const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
         const detailed = sub.contracted;
         const group = new THREE.Group();
-        group.position.set(sub.position[0], .18, sub.position[1]);
+        group.position.set(sub.position[0], -.01, sub.position[1]);
         group.rotation.y = sub.position[0] * -.009;
         group.userData = { sub, index, destroyed: false, decision: null, baseX: group.position.x, baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
         group.scale.setScalar(.01);
@@ -583,9 +607,9 @@
             if (!openingRunning) return;
             building.userData.buildBorn = performance.now();
             playSound('nyu1', .2);
-          }, index * 100);
+          }, index * 80);
         });
-        const lastBuildingAt = (buildOrder.length - 1) * 100;
+        const lastBuildingAt = (buildOrder.length - 1) * 80;
         scheduleOpening(() => {
           if (!openingRunning) return;
           treeVisible = true;
@@ -619,7 +643,7 @@
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          scanMessage.textContent = '契約中サブスク 10本 発見';
+          scanMessage.textContent = '契約中サブスク 13本 発見';
           mailLabel.textContent = '同じジャンルの重複も見つかりました';
         }, 1750);
         scheduleOpening(beginCityBuild, 2450);
@@ -721,16 +745,16 @@
         }
       }
 
-      savingsTree.position.set(0, .12, 5.55);
+      savingsTree.position.set(0, 0, 10.1);
       scene.add(savingsTree);
       rebuildSavingsTree(0);
 
-      const clampCameraDistance = value => Math.max(20, Math.min(46, value));
+      const clampCameraDistance = value => Math.max(20, Math.min(52, value));
 
       function startCameraTween(building) {
         const target = building
           ? { distance: clampCameraDistance(cameraDistance - 6), targetX: building.position.x, targetY: Math.min(2.8, building.userData.height * .42), targetZ: building.position.z }
-          : { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: -.8 };
+          : { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: 0 };
         viewTween = {
           startedAt: performance.now(),
           duration: 1000,
@@ -793,7 +817,7 @@
 
       function selectBuilding(building) {
         if (!building || building.userData.destroyed || !building.userData.sub.contracted) return;
-        playSound('hyun1', .72);
+        playSound('item-get1', .5);
         const sameBuilding = selected === building;
         if (selected) selected.userData.halo.material.opacity = 0;
         selected = building;
