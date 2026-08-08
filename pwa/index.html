@@ -169,12 +169,57 @@
     #destroy-button { background: linear-gradient(#f6b48c, #e05a3a); color: #4a130a; }
     #cancel-keep { width: calc(100% - 28px); margin: 10px 14px 0; background: var(--steel-face); color: var(--panel-text); }
 
+    #friend-sheet {
+      position: fixed; z-index: 9; left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom));
+      margin: auto; width: min(calc(100% - 20px), 520px); padding: 0 0 12px;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      border-radius: 2px; background: var(--steel-face);
+      box-shadow: 0 0 0 2px var(--steel-outline), 0 12px 40px rgba(4,3,27,.48);
+      transform: translateY(calc(100% + 28px)); opacity: 0; transition: .28s cubic-bezier(.2,.9,.2,1.1); pointer-events: none;
+    }
+    #friend-sheet.visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    #friend-summary { margin: 10px 14px 8px; color: #343a4e; font-size: .9rem; font-weight: 700; text-align: center; }
+    #friend-list { list-style: none; margin: 0 14px; padding: 0; display: grid; gap: 6px; max-height: 38vh; overflow-y: auto; }
+    .friend-row {
+      display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px;
+      padding: 6px 8px; border: 2px solid; border-color: var(--steel-lo) var(--steel-hi) var(--steel-hi) var(--steel-lo);
+      background: var(--lcd-bg); color: var(--lcd-green); font-family: var(--mono); font-weight: 700;
+    }
+    .friend-row.cancelled .friend-sub-label { text-decoration: line-through; opacity: .55; }
+    .friend-sub-label { text-align: left; font-size: .92rem; }
+    .friend-sub-price { font-size: .8rem; color: #ffe066; }
+    .friend-row.cancelled .friend-sub-price { color: #ff7d6b; }
+    .friend-cancel {
+      min-height: 34px; padding: 2px 10px; cursor: pointer; border-radius: 2px; touch-action: manipulation;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: linear-gradient(#f6b48c, #e05a3a); color: #4a130a; font-weight: 1000; font-size: .78rem;
+      box-shadow: 0 0 0 1px var(--steel-outline), 0 2px 0 rgba(10,12,24,.4);
+    }
+    .friend-cancel:disabled { filter: grayscale(.6); opacity: .7; }
+    .friend-cancel:active:not(:disabled) { transform: translateY(2px); }
+    #friend-note { margin: 8px 14px 0; color: #5c6377; font-size: .68rem; font-weight: 700; text-align: center; }
+    #friend-close {
+      width: calc(100% - 28px); margin: 10px 14px 0; min-height: 44px; cursor: pointer; border-radius: 2px;
+      border: 3px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: var(--steel-face); color: var(--panel-text); font-weight: 1000;
+      box-shadow: 0 0 0 1px var(--steel-outline), 0 3px 0 rgba(10,12,24,.4);
+    }
+    #friend-toast {
+      position: fixed; z-index: 16; top: 19%; left: 50%; transform: translateX(-50%);
+      width: max-content; max-width: 92vw; padding: 8px 14px; border-radius: 2px;
+      border: 2px solid; border-color: var(--steel-hi) var(--steel-lo) var(--steel-lo) var(--steel-hi);
+      background: rgba(7, 26, 12, .95); color: var(--lcd-green); font-family: var(--mono); font-weight: 700; font-size: .85rem;
+      text-shadow: 0 0 7px rgba(86,255,141,.55); box-shadow: 0 0 0 1px var(--steel-outline), 0 8px 22px rgba(0,0,0,.4);
+      opacity: 0; transition: opacity .25s; pointer-events: none;
+    }
+    #friend-toast.visible { opacity: 1; }
+
     #flash { position: fixed; z-index: 7; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle, #fffde0, #ffbf24 28%, #ff4d00 58%, transparent 73%); mix-blend-mode: screen; }
     #flash.go { animation: flash .44s ease-out; }
     #cancel-stamp {
       position: fixed; z-index: 14; top: 44%; left: 50%; padding: 8px 18px; border: 7px double #e52c35; border-radius: 12px;
       color: #e52c35; background: rgba(255,245,221,.9); font-size: clamp(2.8rem, 15vw, 5.8rem); font-weight: 1000;
-      letter-spacing: .08em; line-height: 1; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4);
+      letter-spacing: .08em; line-height: 1; opacity: 0; pointer-events: none; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4);
       text-shadow: 2px 2px 0 rgba(255,255,255,.8); box-shadow: 0 4px 18px rgba(75,0,12,.4);
     }
     #cancel-stamp.go { animation: stamp-in .8s cubic-bezier(.15,.85,.2,1); }
@@ -232,7 +277,7 @@
 
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">契約中 <span id="active-count">13本</span>　月額合計 <span id="contract-total">¥24,010</span></div>
+      <div class="counter-main">契約中 <span id="active-count">0本</span>　月額合計 <span id="contract-total">¥0</span></div>
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
@@ -248,6 +293,14 @@
     <button id="cancel-keep" type="button" hidden>育成を取り消す</button>
     <p id="sheet-action" hidden>📱 振りかぶって叩きつけろ！</p>
   </aside>
+  <aside id="friend-sheet" aria-live="polite">
+    <h2 class="sc-titlebar">🪐 ヒロの星 — ともだちのサブスク</h2>
+    <p id="friend-summary"></p>
+    <ul id="friend-list"></ul>
+    <p id="friend-note">※おふざけ機能: 実際には解約されません。たぶん。</p>
+    <button id="friend-close" type="button">そっと閉じる</button>
+  </aside>
+  <div id="friend-toast" aria-live="polite"></div>
   <div id="flash"></div>
   <div id="cancel-stamp" aria-hidden="true">解約!</div>
 
@@ -274,62 +327,210 @@
       'use strict';
 
       const districts = [
-        { genre: 'AI', name: 'AI街', center: [-5.4, 5.7], size: [4.7, 4.6] },
-        { genre: '動画', name: '動画街', center: [0, -5.7], size: [4.9, 4.6] },
-        { genre: '音楽', name: '音楽街', center: [5.4, -5.7], size: [4.7, 4.6] },
-        { genre: 'ゲーム', name: 'ゲーム街', center: [0, 5.7], size: [4.7, 4.6] },
-        { genre: '学び', name: '学び街', center: [-5.4, 0], size: [4.7, 4.6] },
-        { genre: 'からだ', name: 'からだ街', center: [5.4, 5.7], size: [4.7, 4.6] },
-        { genre: 'マンガ', name: 'マンガ街', center: [-5.4, -5.7], size: [4.7, 4.6] },
-        { genre: 'クラウド', name: 'クラウド街', center: [0, 0], size: [4.7, 4.6] },
-        { genre: 'おかいもの', name: 'おかいもの街', center: [5.4, 0], size: [4.7, 4.6] }
+        { genre: 'AI', name: 'AI街', center: [-12, 6], size: [5.4, 5.4] },
+        { genre: 'ゲーム', name: 'ゲーム街', center: [-6, 6], size: [5.4, 5.4] },
+        { genre: 'からだ', name: 'からだ街', center: [0, 6], size: [5.4, 5.4] },
+        { genre: '通信', name: '通信街', center: [6, 6], size: [5.4, 5.4] },
+        { genre: 'ほけん', name: 'ほけん街', center: [12, 6], size: [5.4, 5.4] },
+        { genre: '学び', name: '学び街', center: [-12, 0], size: [5.4, 5.4] },
+        { genre: 'クラウド', name: 'クラウド街', center: [-6, 0], size: [5.4, 5.4] },
+        { genre: 'おかいもの', name: 'おかいもの街', center: [0, 0], size: [5.4, 5.4] },
+        { genre: 'ごはん', name: 'ごはん街', center: [6, 0], size: [5.4, 5.4] },
+        { genre: 'ニュース', name: 'ニュース街', center: [12, 0], size: [5.4, 5.4] },
+        { genre: 'マンガ', name: 'マンガ街', center: [-12, -6], size: [5.4, 5.4] },
+        { genre: '動画', name: '動画街', center: [-6, -6], size: [5.4, 5.4] },
+        { genre: '音楽', name: '音楽街', center: [0, -6], size: [5.4, 5.4] }
       ];
-      const subscriptions = [
-        { name: 'ChatGPT', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.75, 5] },
-        { name: 'Claude', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.4, 5] },
-        { name: 'Midjourney', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-4.05, 5] },
-        { name: 'Gemini', icon: '✨', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.1, 6.4] },
-        { name: 'Copilot', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.7, 6.4] },
-        { name: 'Netflix', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -6.4] },
-        { name: 'Disney+', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -6.4] },
-        { name: 'Prime Video', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -6.4] },
-        { name: 'U-NEXT', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -5] },
-        { name: 'dアニメストア', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -5] },
-        { name: 'ABEMA', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -5] },
-        { name: 'Spotify', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.7, -6.4] },
-        { name: 'Apple Music', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [6.1, -6.4] },
-        { name: 'YouTube Music', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.7, -5] },
-        { name: 'Amazon Music', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [6.1, -5] },
-        { name: 'Switch Online', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-1.35, 5.3] },
-        { name: 'PS Plus', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [0, 5.3] },
-        { name: 'Game Pass', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [1.35, 5.3] },
-        { name: 'Duolingo', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-6.75, -.4] },
-        { name: 'スタディサプリ', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-5.4, -.4] },
-        { name: 'Udemy', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-4.05, -.4] },
-        { name: 'エニタイム', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [4.05, 5.3] },
-        { name: 'chocoZAP', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.4, 5.3] },
-        { name: 'Calm', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.75, 5.3] },
-        { name: '少年ジャンプ＋', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-6.75, -6.4] },
-        { name: 'ピッコマ', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.4, -6.4] },
-        { name: 'LINEマンガ', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.05, -6.4] },
-        { name: 'Google One', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-1.35, -.4] },
-        { name: 'Dropbox', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [0, -.4] },
-        { name: 'iCloud+', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -.4] },
-        { name: 'Amazonプライム', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
-        { name: '楽天プレミアム', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
+      const parkBlocks = [
+        { name: 'みどり公園', center: [6, -6], size: [5.4, 5.4] },
+        { name: 'ひろば公園', center: [12, -6], size: [5.4, 5.4] }
       ];
-      let scanResult = null;
-      try {
-        const savedScan = localStorage.getItem('zencut-scan');
-        if (savedScan) {
-          const parsedScan = JSON.parse(savedScan);
-          if (parsedScan && Array.isArray(parsedScan.subs) && parsedScan.subs.length > 0) scanResult = parsedScan;
-        }
-      } catch (error) {
-        scanResult = null;
+      const mockSubscriptions = [
+        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-13.7, 4.75] },
+        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-12, 4.75] },
+        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-10.3, 4.75] },
+        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-12.85, 7.05] },
+        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-11.15, 7.05] },
+        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-7, 4.75] },
+        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-6, 4.75] },
+        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-5, 4.75] },
+        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [-1, 4.75] },
+        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [0, 4.75] },
+        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [1, 4.75] },
+        { name: 'SIMBER', icon: '📶', genre: '通信', contracted: true, price: 2970, months: 30, color: 0xd84f62, dark: 0x8c344f, position: [4.4, 4.75] },
+        { name: 'LINKPOP', icon: '🔗', genre: '通信', contracted: false, price: 0, months: 0, color: 0xc66b9f, dark: 0x75486f, position: [6, 4.75] },
+        { name: 'WIFLY', icon: '🛜', genre: '通信', contracted: false, price: 0, months: 0, color: 0xc75f86, dark: 0x79435f, position: [7.6, 4.75] },
+        { name: 'MAMORUN', icon: '🛡️', genre: 'ほけん', contracted: true, price: 1490, months: 36, color: 0xe16c74, dark: 0x914c68, position: [11.15, 4.75] },
+        { name: 'ANSHINDO', icon: '🏥', genre: 'ほけん', contracted: false, price: 0, months: 0, color: 0x9c84aa, dark: 0x5d5878, position: [12.85, 4.75] },
+        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-13.7, -1.25] },
+        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-12, -1.25] },
+        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-10.3, -1.25] },
+        { name: 'DRIVEBOX', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-7.2, -1.25] },
+        { name: 'SYNCLY', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-6, -1.25] },
+        { name: 'VAULTIE', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-4.8, -1.25] },
+        { name: 'PRIMEGO', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [-.85, -1.25] },
+        { name: 'SHOPPLE', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [.85, -1.25] },
+        { name: 'BENTOGO', icon: '🍱', genre: 'ごはん', contracted: true, price: 3980, months: 6, color: 0xed7f5d, dark: 0xb94d4f, position: [4.3, -1.25] },
+        { name: 'MEALPON', icon: '🥘', genre: 'ごはん', contracted: false, price: 0, months: 0, color: 0xd98569, dark: 0x8d554f, position: [6, -1.25] },
+        { name: 'DELISH', icon: '🍜', genre: 'ごはん', contracted: false, price: 0, months: 0, color: 0xdf5d73, dark: 0x8c465d, position: [7.7, -1.25] },
+        { name: 'ASAYOMI', icon: '📰', genre: 'ニュース', contracted: true, price: 1980, months: 24, color: 0xe66e5e, dark: 0x9c4b58, position: [11.15, -1.25] },
+        { name: 'MAGPACK', icon: '📚', genre: 'ニュース', contracted: false, price: 0, months: 0, color: 0xc17d95, dark: 0x704f70, position: [12.85, -1.25] },
+        { name: 'COMICON', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-13.7, -7.25] },
+        { name: 'INKPOP', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-12, -7.25] },
+        { name: 'TOONBOX', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-10.3, -7.25] },
+        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-7.7, -7.25] },
+        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [-6, -7.25] },
+        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.3, -7.25] },
+        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.85, -4.95] },
+        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.15, -4.95] },
+        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.15, -5.75] },
+        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [-1.3, -7.25] },
+        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [.6, -7.25] },
+        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-1.1, -4.95] },
+        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [.85, -4.95] }
+      ];
+      const knownGenres = new Set(districts.map(district => district.genre));
+      const otherDistrictCenter = [26, -16];
+      const scanSlotOffsets = [
+        [-2.1, -1.25], [-.7, -1.25], [.7, -1.25], [2.1, -1.25],
+        [-2.1, 1.05], [-.7, 1.05], [.7, 1.05], [2.1, 1.05]
+      ];
+      let subscriptions = mockSubscriptions;
+      let scanMode = false;
+      let scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+
+      function scanDistrictGenre(genre) {
+        return knownGenres.has(genre) ? genre : 'そのほか';
       }
-      // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす
+
+      function getDistrictGenre(sub) {
+        return sub.districtGenre || sub.genre;
+      }
+
+      function scanPositionFor(genre, index) {
+        const district = knownGenres.has(genre)
+          ? districts.find(item => item.genre === genre)
+          : { center: otherDistrictCenter };
+        const offset = scanSlotOffsets[index % scanSlotOffsets.length];
+        return [district.center[0] + offset[0], district.center[1] + offset[1]];
+      }
+
+      function scanPaletteFor(genre, index) {
+        const candidates = mockSubscriptions.filter(sub => sub.contracted && sub.genre === genre);
+        const palette = candidates.length
+          ? candidates[index % candidates.length]
+          : mockSubscriptions.filter(sub => sub.contracted)[index % mockSubscriptions.filter(sub => sub.contracted).length];
+        return { color: palette.color, dark: palette.dark };
+      }
+
+      function readScanData() {
+        try {
+          if (/(?:^|[?&])mock=1(?:&|$)/.test(location.search)) return null;
+          const raw = localStorage.getItem('zencut-scan');
+          if (raw == null) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object' || !Number.isFinite(parsed.at) || !Array.isArray(parsed.subs)) {
+            throw new Error('atまたはsubs配列がありません');
+          }
+          if (parsed.subs.length === 0) return null;
+          parsed.subs.forEach((sub, index) => {
+            if (!sub || typeof sub !== 'object'
+              || typeof sub.name !== 'string' || !sub.name.trim()
+              || typeof sub.icon !== 'string' || !sub.icon
+              || typeof sub.genre !== 'string' || !sub.genre.trim()
+              || sub.contracted !== true
+              || !Number.isFinite(sub.price) || sub.price < 0
+              || !Number.isFinite(sub.months) || sub.months < 0) {
+              throw new Error(`subs[${index}]の形式が不正です`);
+            }
+          });
+          return parsed.subs.map(sub => ({
+            name: sub.name.trim(),
+            icon: sub.icon,
+            genre: sub.genre.trim(),
+            contracted: true,
+            price: sub.price,
+            months: sub.months
+          }));
+        } catch (error) {
+          console.warn('zencut-scanを読み込めないためモックデータで起動します', error);
+          return null;
+        }
+      }
+
+      function applyScanData(scanSubs) {
+        if (!scanSubs) return;
+        const grouped = new Map();
+        scanSubs.forEach(sub => {
+          const districtGenre = scanDistrictGenre(sub.genre);
+          if (!grouped.has(districtGenre)) grouped.set(districtGenre, []);
+          grouped.get(districtGenre).push({ ...sub, districtGenre });
+        });
+        const accepted = [];
+        [...knownGenres, 'そのほか'].forEach(genre => {
+          const group = grouped.get(genre) || [];
+          group.sort((a, b) => b.price - a.price);
+          group.slice(0, 4).forEach((sub, index) => {
+            const palette = scanPaletteFor(genre, index);
+            accepted.push({
+              ...sub,
+              ...palette,
+              position: scanPositionFor(genre, index)
+            });
+          });
+        });
+        subscriptions = [
+          ...mockSubscriptions.filter(sub => !sub.contracted),
+          ...accepted
+        ];
+        scanMode = true;
+        scanSubscriptionCount = scanSubs.length;
+        if (grouped.has('そのほか') && grouped.get('そのほか').length > 0) {
+          districts.push({ genre: 'そのほか', name: 'そのほか街', center: otherDistrictCenter, size: [5.4, 5.4] });
+        }
+      }
+
+      function initializeStartupData() {
+        try {
+          applyScanData(readScanData());
+        } catch (error) {
+          console.warn('スキャンデータの適用に失敗したためモックデータで起動します', error);
+          subscriptions = mockSubscriptions;
+          scanMode = false;
+          scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+        }
+      }
+
+      // 街区を1つの都市に固めず、惑星全体に散らす(モック座標は街区ごと移動、スキャン配置は新centerを自動参照)
+      const districtSpread = {
+        'AI': [0, 4], 'ゲーム': [13, 6], 'からだ': [-12, 8], '通信': [3, -15], 'ほけん': [-15, -6],
+        '学び': [17, -8], 'クラウド': [-6, 19], 'おかいもの': [2, 24], 'ごはん': [-14, 16],
+        'ニュース': [22, 7], 'マンガ': [-16, -22], '動画': [12, -24], '音楽': [-28, -5]
+      };
+      const parkSpread = { 'みどり公園': [-9, 28], 'ひろば公園': [20, 20] };
+      districts.forEach(district => {
+        const to = districtSpread[district.genre];
+        if (!to) return;
+        const from = district.center;
+        mockSubscriptions.forEach(sub => {
+          if (sub.genre !== district.genre) return;
+          sub.position[0] += to[0] - from[0];
+          sub.position[1] += to[1] - from[1];
+        });
+        district.center = to;
+      });
+      parkBlocks.forEach(park => {
+        if (parkSpread[park.name]) park.center = parkSpread[park.name];
+      });
+
+      initializeStartupData();
+      // ビル大型化に合わせて街区内の間隔を広げ、碁盤の目に見えないようランダムにもずらす
       subscriptions.forEach(sub => {
+        const home = districts.find(district => district.genre === getDistrictGenre(sub));
+        if (home) {
+          sub.position[0] = home.center[0] + (sub.position[0] - home.center[0]) * 1.3;
+          sub.position[1] = home.center[1] + (sub.position[1] - home.center[1]) * 1.3;
+        }
         sub.position[0] += (Math.random() - .5) * .56;
         sub.position[1] += (Math.random() - .5) * .56;
       });
@@ -377,7 +578,7 @@
       const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0xa5d2f0, 34, 70);
+      scene.fog = new THREE.Fog(0xa5d2f0, 40, 78);
       const camera = new THREE.PerspectiveCamera(innerWidth / innerHeight < .7 ? 52 : 42, innerWidth / innerHeight, .1, 100);
       const CAMERA_AZIMUTH = THREE.MathUtils.degToRad(40);
       const CAMERA_ELEVATION = THREE.MathUtils.degToRad(50);
@@ -406,7 +607,7 @@
 
       // 小惑星ワールド: 街は大きな球体の表面に載っていて、ドラッグで回すと
       // 地平線の向こうから別の街が現れる
-      const PLANET_RADIUS = 10;
+      const PLANET_RADIUS = 16;
       const planet = new THREE.Group();
       planet.position.y = -PLANET_RADIUS;
       scene.add(planet);
@@ -434,7 +635,7 @@
       planet.add(globe);
 
       const districtMonthly = genre => subscriptions
-        .filter(sub => sub.genre === genre && sub.contracted)
+        .filter(sub => getDistrictGenre(sub) === genre && sub.contracted)
         .reduce((sum, sub) => sum + sub.price, 0);
       const districtTotals = districts.map(district => districtMonthly(district.genre));
       const districtMin = Math.min(...districtTotals);
@@ -458,12 +659,12 @@
         ctx.strokeStyle = heatStyle.heat > .7 ? '#ffb7a5' : '#c8dcf2';
         ctx.lineWidth = 10; ctx.strokeRect(5, 5, 630, 150);
         ctx.fillStyle = '#fff8ed'; ctx.font = '900 52px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(`${district.name} ${formatYen(monthly)}/月`, 320, 82);
+        ctx.fillText(`${district.name} ${district.genre ? `${formatYen(monthly)}/月` : '・公園'}`, 320, 82);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
-        label.scale.set(3.15, .79, 1);
-        placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.05);
+        label.scale.set(2.75, .69, 1);
+        placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.12);
         return label;
       }
 
@@ -485,42 +686,55 @@
         return geometry;
       }
 
-      districts.forEach(district => {
-        const monthly = districtMonthly(district.genre);
-        const heatStyle = districtHeat(monthly);
+      const layoutBlocks = [
+        ...districts,
+        ...parkBlocks.filter(park => !districts.some(district => district.center[0] === park.center[0] && district.center[1] === park.center[1]))
+      ];
+      layoutBlocks.forEach(block => {
+        const monthly = block.genre ? districtMonthly(block.genre) : 0;
+        const heatStyle = block.genre ? districtHeat(monthly) : {
+          heat: 0,
+          color: new THREE.Color(0x3b765e),
+          background: 'rgba(42, 91, 72, .96)'
+        };
         const tile = new THREE.Mesh(
-          createDistrictZoneGeometry(district.size[0], district.size[1]),
+          createDistrictZoneGeometry(block.size[0], block.size[1]),
           new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .82, metalness: .03 })
         );
         tile.receiveShadow = true;
-        placeOnPlanet(tile, district.center[0], district.center[1], .015);
+        placeOnPlanet(tile, block.center[0], block.center[1], .015);
         tile.rotateX(-Math.PI / 2);
-        createDistrictLabel(district, monthly, heatStyle);
+        createDistrictLabel(block, monthly, heatStyle);
       });
 
-      // 道路: 短いセグメントに割り、サインカーブで蛇行させて田舎道っぽく球面に沿わせる
+      // 道路: 街区ごとに1本、蛇行する目抜き通りが通り抜ける
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
-      const roadSegmentX = new THREE.BoxGeometry(.82, .07, .44);
-      const roadSegmentZ = new THREE.BoxGeometry(.44, .07, .82);
-      const ROAD_STEP = .62;
-      const roadPaths = [
-        { alongX: true, length: 17, cross: -2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: true, length: 17, cross: 2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 17.6, cross: -2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 17.6, cross: 2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 }
-      ];
-      const roadLateral = (road, along) => road.cross + Math.sin(along * road.freq + road.phase) * road.amp;
-      roadPaths.forEach(road => {
-        const count = Math.ceil(road.length / ROAD_STEP);
+      const roadSegmentGeometry = new THREE.BoxGeometry(.8, .07, .42);
+      const ROAD_STEP = .6;
+      function buildStreet(cx, cz, angle, length) {
+        const phase = Math.random() * 6.3;
+        const amp = .35 + Math.random() * .3;
+        const freq = .38 + Math.random() * .2;
+        const count = Math.ceil(length / ROAD_STEP);
+        const pointAt = t => {
+          const lateral = Math.sin(t * freq + phase) * amp;
+          return [
+            cx + Math.cos(angle) * t - Math.sin(angle) * lateral,
+            cz + Math.sin(angle) * t + Math.cos(angle) * lateral
+          ];
+        };
         for (let i = 0; i < count; i += 1) {
-          const along = -road.length / 2 + (i + .5) * road.length / count;
-          const lateral = roadLateral(road, along);
-          const yaw = Math.atan2(roadLateral(road, along + ROAD_STEP) - lateral, ROAD_STEP);
-          const mesh = new THREE.Mesh(road.alongX ? roadSegmentX : roadSegmentZ, roadMaterial);
+          const t = -length / 2 + (i + .5) * length / count;
+          const [x, z] = pointAt(t);
+          const [nx, nz] = pointAt(t + ROAD_STEP);
+          const mesh = new THREE.Mesh(roadSegmentGeometry, roadMaterial);
           mesh.receiveShadow = true;
-          placeOnPlanet(mesh, road.alongX ? along : lateral, road.alongX ? lateral : along, .02);
-          mesh.rotateY(road.alongX ? -yaw : yaw);
+          placeOnPlanet(mesh, x, z, .02);
+          mesh.rotateY(-Math.atan2(nz - z, nx - x));
         }
+      }
+      layoutBlocks.forEach(block => {
+        buildStreet(block.center[0], block.center[1], Math.random() * Math.PI, block.size[0] + 3.5);
       });
 
       // 緑化: 島の外周に街路樹を植える
@@ -530,12 +744,7 @@
         new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 }),
         new THREE.MeshStandardMaterial({ color: 0x27793a, roughness: .85 })
       ];
-      // 森: 街の外周〜惑星の裏側までと、街なかの隙間にも木を散らして雑多さを出す
-      const nearRoad = (x, z) => roadPaths.some(road => {
-        const along = road.alongX ? x : z;
-        if (Math.abs(along) > road.length / 2 + .4) return false;
-        return Math.abs((road.alongX ? z : x) - roadLateral(road, along)) < .68;
-      });
+      // 森: 惑星全体に均一散布(街区・ランドマーク・道路周辺は植えない)
       const inDistrict = (x, z) => districts.some(district =>
         Math.abs(x - district.center[0]) < district.size[0] / 2 + .2 &&
         Math.abs(z - district.center[1]) < district.size[1] / 2 + .2
@@ -543,15 +752,15 @@
       // 惑星のランドマーク(湖・山・農園・村・花畑)の予定地。木はここを避ける
       const featureZones = [
         { x: 2, z: 16, r: 4.4 },
-        { x: 10.5, z: -4.5, r: 2.3 },
-        { x: -13.5, z: -8, r: 3.6 },
-        { x: -14.5, z: 7, r: 3.4 },
-        { x: 6, z: 20.5, r: 3.2 },
-        { x: 15, z: 11.5, r: 2.8 }
+        { x: -2, z: -14, r: 2.3 },
+        { x: -21, z: -13, r: 3.6 },
+        { x: -22, z: 8, r: 3.4 },
+        { x: 9, z: 22, r: 3.2 },
+        { x: 17, z: 13, r: 2.8 }
       ];
       const inFeature = (x, z) => featureZones.some(zone => Math.hypot(x - zone.x, z - zone.z) < zone.r);
       function plantTree(x, z, variant) {
-        if (inFeature(x, z)) return;
+        if (inFeature(x, z) || inDistrict(x, z)) return;
         const tree = new THREE.Group();
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
         trunk.position.y = .15;
@@ -563,18 +772,11 @@
         tree.scale.setScalar(.75 + Math.random() * .55);
         placeOnPlanet(tree, x, z, 0);
       }
-      for (let i = 0; i < 130; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = i < 46 ? 9.3 + Math.random() * 2.4 : 12 + Math.random() * (Math.PI * PLANET_RADIUS - 12.5);
-        plantTree(Math.cos(angle) * radius, Math.sin(angle) * radius, i);
-      }
-      // 街なかの空き地にもまばらに
-      for (let i = 0, planted = 0; i < 220 && planted < 26; i += 1) {
-        const x = (Math.random() - .5) * 17.4;
-        const z = (Math.random() - .5) * 17.4;
-        if (inDistrict(x, z) || nearRoad(x, z)) continue;
-        plantTree(x, z, i);
-        planted += 1;
+      for (let i = 0; i < 230; i += 1) {
+        const azimuth = Math.random() * Math.PI * 2;
+        const polar = Math.acos(1 - 2 * Math.random());
+        const radius = Math.min(polar * PLANET_RADIUS, Math.PI * PLANET_RADIUS - .5);
+        plantTree(Math.cos(azimuth) * radius, Math.sin(azimuth) * radius, i);
       }
 
       // ---- 惑星のランドマーク: 回すと出会える風景たち ----
@@ -690,11 +892,21 @@
 
       // featureZonesの座標と対応させて配置(木はそこを避けて生えている)
       createLake(2, 16, 4.6);
-      createLake(10.5, -4.5, 2.1);
-      createMountains(-13.5, -8);
-      createFarm(-14.5, 7);
-      createVillage(6, 20.5);
-      createMeadow(15, 11.5);
+      createLake(-2, -14, 2.1);
+      createMountains(-21, -13);
+      createFarm(-22, 8);
+      createVillage(9, 22);
+      createMeadow(17, 13);
+      // 公園ブロックには木を植えて憩いの場に
+      parkBlocks.forEach(park => {
+        for (let i = 0; i < 6; i += 1) {
+          plantTree(
+            park.center[0] + (Math.random() - .5) * (park.size[0] - 1.6),
+            park.center[1] + (Math.random() - .5) * (park.size[1] - 1.6),
+            i
+          );
+        }
+      });
 
       // 昼空: 星の代わりにぽっかり浮かぶ雲
       const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .88, fog: false });
@@ -710,6 +922,118 @@
         cloud.position.set((Math.random() - .5) * 30, 9 + Math.random() * 7, -8 - Math.random() * 8);
         scene.add(cloud);
       }
+
+      const fillerHouseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .8, metalness: 0 });
+      const fillerWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xfff0b2, emissive: 0xffa52f, emissiveIntensity: 1.8, roughness: .45 });
+      const fillerTrunkMaterial = new THREE.MeshStandardMaterial({ color: 0x765037, roughness: .95 });
+      const fillerLeafMaterial = new THREE.MeshStandardMaterial({ color: 0x58a976, vertexColors: true, roughness: .9 });
+      const fillerHouseIM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), fillerHouseMaterial, 40);
+      const fillerWindowIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.34, .18, .04), fillerWindowMaterial, 40);
+      const fillerTrunkIM = new THREE.InstancedMesh(new THREE.CylinderGeometry(.09, .13, 1, 5), fillerTrunkMaterial, 40);
+      const fillerLeafIM = new THREE.InstancedMesh(new THREE.ConeGeometry(.54, 1, 6), fillerLeafMaterial, 40);
+      [fillerHouseIM, fillerWindowIM, fillerTrunkIM, fillerLeafIM].forEach(mesh => {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.userData.filler = true;
+        scene.add(mesh);
+      });
+      const fillerMatrix = new THREE.Matrix4();
+      const fillerQuaternion = new THREE.Quaternion();
+      const fillerPosition = new THREE.Vector3();
+      const fillerScale = new THREE.Vector3();
+      const fillerOffset = new THREE.Vector3();
+      const fillerColor = new THREE.Color();
+      const housePalette = [0xf5d2c2, 0xe6c8e7, 0xc8dcf0, 0xcce8d3, 0xf7e1ae, 0xe1cff5];
+      const leafPalette = [0x4f9a68, 0x62ae76, 0x73b982, 0x478e70];
+      let fillerHouseCount = 0;
+      let fillerTreeCount = 0;
+      function addFillerHouse(x, z, rotation, height, color) {
+        if (fillerHouseCount >= 40) return;
+        fillerQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotation);
+        fillerPosition.set(x, height / 2 + .08, z);
+        fillerScale.set(1.05, height, .9);
+        fillerHouseIM.setMatrixAt(fillerHouseCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerHouseIM.setColorAt(fillerHouseCount, fillerColor.setHex(color));
+        fillerOffset.set(0, height * .58, .47).applyQuaternion(fillerQuaternion).add(fillerPosition);
+        fillerScale.set(1, 1, 1);
+        fillerWindowIM.setMatrixAt(fillerHouseCount, fillerMatrix.compose(fillerOffset, fillerQuaternion, fillerScale));
+        fillerHouseCount += 1;
+      }
+      function addFillerTree(x, z, height, color) {
+        if (fillerTreeCount >= 40) return;
+        fillerPosition.set(x, height * .32 + .08, z);
+        fillerScale.set(1, height * .64, 1);
+        fillerTrunkIM.setMatrixAt(fillerTreeCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerPosition.set(x, height * .86 + .08, z);
+        fillerScale.set(height * .68, height * .92, height * .68);
+        fillerLeafIM.setMatrixAt(fillerTreeCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerLeafIM.setColorAt(fillerTreeCount, fillerColor.setHex(color));
+        fillerTreeCount += 1;
+      }
+      parkBlocks.forEach((block, blockIndex) => {
+        const [cx, cz] = block.center;
+        [[-1.8, -1.8], [0, -1.8], [1.8, -1.8], [-1.8, -.15], [1.8, -.15]].forEach(([x, z], index) => {
+          addFillerHouse(cx + x, cz + z, (index + blockIndex) % 2 ? .12 : -.12, 1.05 + (index % 2) * .18, housePalette[(index + blockIndex * 2) % housePalette.length]);
+        });
+        [[-1.75, 1.75], [0, 1.75], [1.75, 1.75], [0, .55]].forEach(([x, z], index) => {
+          addFillerTree(cx + x, cz + z, 1.05 + (index % 2) * .22, leafPalette[(index + blockIndex) % leafPalette.length]);
+        });
+      });
+      fillerHouseIM.count = fillerHouseCount;
+      fillerWindowIM.count = fillerHouseCount;
+      fillerTrunkIM.count = fillerTreeCount;
+      fillerLeafIM.count = fillerTreeCount;
+      [fillerHouseIM, fillerWindowIM, fillerTrunkIM, fillerLeafIM].forEach(mesh => {
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      });
+
+      const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .55, metalness: .08 });
+      const carTopMaterial = new THREE.MeshStandardMaterial({ color: 0xbed5e4, vertexColors: true, roughness: .45, metalness: .04 });
+      const carBodyIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.7, .28, 1.15), carBodyMaterial, 4);
+      const carTopIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.54, .22, .54), carTopMaterial, 4);
+      carBodyIM.userData.filler = true;
+      carTopIM.userData.filler = true;
+      carBodyIM.castShadow = false; carBodyIM.receiveShadow = false;
+      carTopIM.castShadow = false; carTopIM.receiveShadow = false;
+      scene.add(carBodyIM); scene.add(carTopIM);
+      const cars = [
+        { axis: 'x', lane: -3, phase: 1.2, speed: 2.4, direction: 1, color: 0xf2756b },
+        { axis: 'x', lane: 3, phase: 16.4, speed: 2.1, direction: -1, color: 0x7ac9ea },
+        { axis: 'z', lane: -9, phase: 5.1, speed: 2.0, direction: 1, color: 0xffd36b },
+        { axis: 'z', lane: 9, phase: 13.2, speed: 2.3, direction: -1, color: 0xb8e58b }
+      ];
+      cars.forEach((car, index) => {
+        carBodyIM.setColorAt(index, fillerColor.setHex(car.color));
+        carTopIM.setColorAt(index, fillerColor.setHex(car.color));
+      });
+      carBodyIM.instanceMatrix.needsUpdate = true;
+      carTopIM.instanceMatrix.needsUpdate = true;
+      carBodyIM.instanceColor.needsUpdate = true;
+      carTopIM.instanceColor.needsUpdate = true;
+      const carQuaternion = new THREE.Quaternion();
+      const carPosition = new THREE.Vector3();
+      const carTopPosition = new THREE.Vector3();
+      const carUnitScale = new THREE.Vector3(1, 1, 1);
+      const carTopScale = new THREE.Vector3(.92, .82, .92);
+      function updateCars(time) {
+        cars.forEach((car, index) => {
+          const travel = (car.phase + time * car.speed * car.direction) % (car.axis === 'x' ? 30 : 18);
+          const distance = travel < 0 ? travel + (car.axis === 'x' ? 30 : 18) : travel;
+          const angle = car.axis === 'x'
+            ? (car.direction > 0 ? 0 : Math.PI)
+            : (car.direction > 0 ? Math.PI / 2 : -Math.PI / 2);
+          carQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+          if (car.axis === 'x') carPosition.set(distance - 15, .29, car.lane);
+          else carPosition.set(car.lane, .29, distance - 9);
+          carBodyIM.setMatrixAt(index, fillerMatrix.compose(carPosition, carQuaternion, carUnitScale));
+          carTopPosition.set(0, .22, -.07).applyQuaternion(carQuaternion).add(carPosition);
+          carTopIM.setMatrixAt(index, fillerMatrix.compose(carTopPosition, carQuaternion, carTopScale));
+        });
+        carBodyIM.instanceMatrix.needsUpdate = true;
+        carTopIM.instanceMatrix.needsUpdate = true;
+      }
+      updateCars(0);
 
       const buildings = [];
       const clickableMeshes = [];
@@ -733,30 +1057,13 @@
       let openingInterval = null;
       const openingTimers = [];
       let treeVisible = false;
-      let cameraDistance = innerWidth / innerHeight < .7 ? 46 : 38;
+      let cameraDistance = innerWidth / innerHeight < .7 ? 62 : 52;
       let pinchActive = false;
       let pinchStartDistance = 0;
       let pinchStartCameraDistance = cameraDistance;
       let suppressTapUntil = 0;
       let viewTween = null;
       const cameraView = { distance: cameraDistance, targetX: 0, targetY: 1.5, targetZ: 0 };
-
-      function roundedBox(width, height, depth, color, y, bevel = .08, detailed = true) {
-        const segments = detailed ? 2 : 1;
-        const geometry = new THREE.BoxGeometry(width, height, depth, segments, segments, segments);
-        const position = geometry.attributes.position;
-        for (let i = 0; i < position.count; i += 1) {
-          const x = position.getX(i), z = position.getZ(i);
-          const scale = 1 - bevel * Math.max(0, Math.abs(position.getY(i)) / (height / 2));
-          position.setXYZ(i, x * scale, position.getY(i), z * scale);
-        }
-        geometry.computeVertexNormals();
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color, roughness: .58, metalness: .12 }));
-        mesh.position.y = y;
-        mesh.castShadow = detailed;
-        mesh.receiveShadow = true;
-        return mesh;
-      }
 
       function createSign(sub) {
         const canvas = document.createElement('canvas');
@@ -779,56 +1086,369 @@
         return sign;
       }
 
-      function addWindows(group, width, height, baseY, sub) {
-        const rows = Math.max(1, Math.floor(height / .62));
-        const cols = 2;
-        const material = sub.contracted
-          ? new THREE.MeshStandardMaterial({ color: 0xffe16a, emissive: 0xff9d23, emissiveIntensity: 2.1 })
-          : new THREE.MeshStandardMaterial({ color: 0x555665, emissive: 0x151620, emissiveIntensity: .15 });
+      // ---- ビルのデザインシステム ----
+      const BUILDING_SCALE = 1.35; // ビル全体の大きさ倍率
+      // 窓はメッシュを並べず、壁面テクスチャに焼き込んで4面すべてに表示する
+      function seededRand(seed) {
+        let state = (seed * 2654435761 + 104729) % 2147483647;
+        if (state <= 0) state += 2147483646;
+        return () => (state = state * 16807 % 2147483647) / 2147483647;
+      }
+
+      function createFacadeMaterials(sub, rand, tierHeight, width) {
+        const rows = Math.max(1, Math.min(9, Math.round(tierHeight / .52)));
+        const cols = Math.max(2, Math.min(5, Math.round(width / .3)));
+        const canvas = document.createElement('canvas');
+        canvas.width = 96; canvas.height = 96;
+        const ctx = canvas.getContext('2d');
+        const bodyColor = new THREE.Color(sub.contracted ? sub.color : 0x8b8f9a);
+        const topColor = bodyColor.clone().lerp(new THREE.Color(0xffffff), .2);
+        const bottomColor = bodyColor.clone().lerp(new THREE.Color(0x232838), .28);
+        const gradient = ctx.createLinearGradient(0, 0, 0, 96);
+        gradient.addColorStop(0, `#${topColor.getHexString()}`);
+        gradient.addColorStop(1, `#${bottomColor.getHexString()}`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 96, 96);
+        const marginX = 11, marginTop = 10, marginBottom = 13;
+        const cellW = (96 - marginX * 2) / cols;
+        const cellH = (96 - marginTop - marginBottom) / rows;
         for (let row = 0; row < rows; row += 1) {
           for (let col = 0; col < cols; col += 1) {
-            if ((row + col + sub.months) % 5 === 0) continue;
-            const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(.19, .17, .035), material);
-            windowMesh.position.set((col - .5) * .38, baseY - height / 2 + .38 + row * .48, .558);
-            group.add(windowMesh);
+            const lit = rand() < (sub.contracted ? .56 : .2);
+            const x = marginX + col * cellW + cellW * .18;
+            const y = marginTop + row * cellH + cellH * .22;
+            ctx.fillStyle = lit ? '#ffe9a3' : '#2a3145';
+            ctx.fillRect(x, y, cellW * .64, cellH * .56);
+            if (lit) {
+              ctx.fillStyle = 'rgba(255,255,255,.5)';
+              ctx.fillRect(x, y, cellW * .64, cellH * .18);
+            }
           }
+        }
+        ctx.fillStyle = 'rgba(18,22,36,.4)';
+        ctx.fillRect(0, 92, 96, 4);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const wall = new THREE.MeshStandardMaterial({ map: texture, roughness: .62, metalness: .08 });
+        const roofMaterial = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(sub.contracted ? sub.dark : 0x55545d).lerp(new THREE.Color(0xffffff), .14),
+          roughness: .8
+        });
+        return [wall, wall, roofMaterial, roofMaterial, wall, wall];
+      }
+
+      function addTier(group, sub, rand, width, depth, tierHeight, baseY) {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(width, tierHeight, depth),
+          createFacadeMaterials(sub, rand, tierHeight, width)
+        );
+        mesh.position.y = baseY + tierHeight / 2;
+        mesh.castShadow = sub.contracted;
+        mesh.receiveShadow = true;
+        mesh.userData.building = group;
+        group.add(mesh);
+        if (sub.contracted) clickableMeshes.push(mesh);
+        return mesh;
+      }
+
+      function addLedge(group, width, depth, y, colorHex, cx = 0, cz = 0) {
+        const ledge = new THREE.Mesh(
+          new THREE.BoxGeometry(width, .09, depth),
+          new THREE.MeshStandardMaterial({ color: colorHex, roughness: .72 })
+        );
+        ledge.position.set(cx, y, cz);
+        group.add(ledge);
+      }
+
+      const tankMaterial = new THREE.MeshStandardMaterial({ color: 0xc9cdd6, roughness: .55, metalness: .3 });
+      const tankCapMaterial = new THREE.MeshStandardMaterial({ color: 0x9aa0ad, roughness: .6 });
+      const acUnitMaterial = new THREE.MeshStandardMaterial({ color: 0xb7bcc6, roughness: .82 });
+      const antennaMaterial = new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.2 });
+      const antennaTipMaterial = new THREE.MeshStandardMaterial({ color: 0xff6b5c, emissive: 0xff3b2a, emissiveIntensity: 1.4 });
+      const tankGeometry = new THREE.CylinderGeometry(.11, .11, .2, 10);
+      const tankCapGeometry = new THREE.ConeGeometry(.125, .09, 10);
+      const acUnitGeometry = new THREE.BoxGeometry(.17, .12, .14);
+      const awningGeometry = new THREE.BoxGeometry(.82, .05, .32);
+      const doorGeometry = new THREE.BoxGeometry(.2, .3, .04);
+      const awningColors = [0xd86a5a, 0x4f8fc9, 0x54a86b, 0xd8a44f];
+
+      function addRoofProps(group, rand, width, depth, y, cx = 0, cz = 0) {
+        if (rand() < .65) {
+          const tank = new THREE.Mesh(tankGeometry, tankMaterial);
+          tank.position.set(cx + (rand() - .5) * width * .5, y + .1, cz + (rand() - .5) * depth * .5);
+          group.add(tank);
+          const cap = new THREE.Mesh(tankCapGeometry, tankCapMaterial);
+          cap.position.set(tank.position.x, y + .24, tank.position.z);
+          group.add(cap);
+        }
+        const acCount = 1 + Math.floor(rand() * 2);
+        for (let i = 0; i < acCount; i += 1) {
+          const ac = new THREE.Mesh(acUnitGeometry, acUnitMaterial);
+          ac.position.set(cx + (rand() - .5) * width * .6, y + .06, cz + (rand() - .5) * depth * .6);
+          ac.rotation.y = rand() * Math.PI;
+          group.add(ac);
+        }
+      }
+
+      // ---- ジャンル別テーマ装飾 ----
+      const crownDark = new THREE.MeshStandardMaterial({ color: 0x2b2e3a, roughness: .5 });
+      const crownWhite = new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: .55 });
+      const crownRed = new THREE.MeshStandardMaterial({ color: 0xd8544a, roughness: .6 });
+      const crownYellow = new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0x8a5a10, emissiveIntensity: .4, roughness: .5 });
+      const crownCyan = new THREE.MeshStandardMaterial({ color: 0x9fe8ff, emissive: 0x2ba8d8, emissiveIntensity: .9, roughness: .4 });
+      const bowlMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f6fa, roughness: .55, side: THREE.DoubleSide });
+      const dishMaterial = new THREE.MeshStandardMaterial({ color: 0xd6dae2, roughness: .5, metalness: .3, side: THREE.DoubleSide });
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0xe8c39a, roughness: .8 });
+      const mastMaterial = new THREE.MeshStandardMaterial({ color: 0xd6dae2, roughness: .5, metalness: .35 });
+      const villaRoofMaterial = new THREE.MeshStandardMaterial({ color: 0xa8523d, roughness: .78 });
+      const bushMaterial = new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 });
+
+      // 屋上のジャンルオブジェ: 音楽なら音符、からだならバーベル、AIなら光る球…
+      function addGenreCrown(group, sub, rand, topY, cx = 0) {
+        const crown = new THREE.Group();
+        crown.position.set(cx, topY, 0);
+        group.add(crown);
+        const genre = getDistrictGenre(sub);
+        if (genre === '音楽') {
+          const head = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), crownDark);
+          head.scale.set(1, .72, 1); head.position.set(-.1, .16, 0); head.rotation.z = .35;
+          crown.add(head);
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(.026, .026, .54, 6), crownDark);
+          stem.position.set(.04, .4, 0); crown.add(stem);
+          const flag = new THREE.Mesh(new THREE.BoxGeometry(.2, .12, .04), crownDark);
+          flag.position.set(.15, .6, 0); crown.add(flag);
+        } else if (genre === 'からだ') {
+          const bar = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .9, 8), mastMaterial);
+          bar.rotation.z = Math.PI / 2; bar.position.y = .2; crown.add(bar);
+          [-1, 1].forEach(side => {
+            const plate = new THREE.Mesh(new THREE.SphereGeometry(.11, 8, 6), crownDark);
+            plate.position.set(side * .3, .2, 0); crown.add(plate);
+            const outerPlate = new THREE.Mesh(new THREE.SphereGeometry(.075, 8, 6), crownRed);
+            outerPlate.position.set(side * .42, .2, 0); crown.add(outerPlate);
+          });
+        } else if (genre === '動画') {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(.03, .04, .3, 6), crownDark);
+          pole.position.y = .14; crown.add(pole);
+          const canvas = document.createElement('canvas');
+          canvas.width = 64; canvas.height = 40;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#20242f'; ctx.fillRect(0, 0, 64, 40);
+          ctx.fillStyle = '#f2f5fa'; ctx.fillRect(3, 3, 58, 34);
+          ctx.fillStyle = '#f28c3c';
+          ctx.beginPath(); ctx.moveTo(26, 11); ctx.lineTo(26, 29); ctx.lineTo(42, 20); ctx.closePath(); ctx.fill();
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          const screen = new THREE.Mesh(new THREE.PlaneGeometry(.64, .4), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+          screen.position.y = .48; screen.rotation.y = rand() * .6 - .3; crown.add(screen);
+        } else if (genre === 'ゲーム') {
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .14, 10), crownDark);
+          base.position.y = .1; crown.add(base);
+          const stick = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .32, 6), mastMaterial);
+          stick.position.set(-.04, .3, 0); stick.rotation.z = .18; crown.add(stick);
+          const ball = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), crownRed);
+          ball.position.set(-.09, .48, 0); crown.add(ball);
+          const button = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), crownYellow);
+          button.position.set(.13, .18, .05); crown.add(button);
+        } else if (genre === 'クラウド') {
+          [[-.16, .18, 0, .15], [.02, .24, .04, .19], [.19, .17, -.02, .13]].forEach(([px, py, pz, radius]) => {
+            const puff = new THREE.Mesh(new THREE.SphereGeometry(radius, 10, 8), crownWhite);
+            puff.position.set(px, py, pz); crown.add(puff);
+          });
+        } else if (genre === 'おかいもの') {
+          const gift = new THREE.Mesh(new THREE.BoxGeometry(.3, .26, .3), crownRed);
+          gift.position.y = .17; crown.add(gift);
+          const ribbonA = new THREE.Mesh(new THREE.BoxGeometry(.05, .28, .32), crownYellow);
+          ribbonA.position.y = .17; crown.add(ribbonA);
+          const ribbonB = new THREE.Mesh(new THREE.BoxGeometry(.32, .28, .05), crownYellow);
+          ribbonB.position.y = .17; crown.add(ribbonB);
+          const knot = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), crownYellow);
+          knot.position.y = .33; crown.add(knot);
+        } else if (genre === 'ごはん') {
+          const bowl = new THREE.Mesh(new THREE.SphereGeometry(.24, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), bowlMaterial);
+          bowl.rotation.x = Math.PI; bowl.position.y = .28; crown.add(bowl);
+          const rice = new THREE.Mesh(new THREE.SphereGeometry(.18, 10, 8), crownWhite);
+          rice.scale.set(1, .6, 1); rice.position.y = .32; crown.add(rice);
+          const steam = new THREE.Mesh(new THREE.SphereGeometry(.05, 6, 5), crownWhite);
+          steam.position.set(.05, .48, 0); crown.add(steam);
+          const steam2 = steam.clone(); steam2.position.set(-.07, .54, .03); crown.add(steam2);
+        } else if (genre === 'ニュース') {
+          const stalk = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .3, 6), crownDark);
+          stalk.position.y = .14; crown.add(stalk);
+          const dish = new THREE.Mesh(new THREE.SphereGeometry(.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), dishMaterial);
+          dish.position.y = .32; dish.rotation.set(2.2, 0, .4); crown.add(dish);
+          const feed = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .2, 5), mastMaterial);
+          feed.position.set(.06, .38, .06); feed.rotation.set(.6, 0, -.4); crown.add(feed);
+        } else if (genre === 'ほけん') {
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .4, 6), mastMaterial);
+          stem.position.y = .2; crown.add(stem);
+          const canopy = new THREE.Mesh(new THREE.ConeGeometry(.32, .24, 10), crownRed);
+          canopy.position.y = .4; crown.add(canopy);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(.032, 6, 5), crownYellow);
+          tip.position.y = .55; crown.add(tip);
+        } else if (genre === 'AI') {
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .24, 6), crownDark);
+          pole.position.y = .1; crown.add(pole);
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(.15, 12, 10), crownCyan);
+          orb.position.y = .34; crown.add(orb);
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(.23, .026, 6, 16), crownYellow);
+          ring.position.y = .34; ring.rotation.x = 1.15; crown.add(ring);
+        } else if (genre === 'マンガ') {
+          const canvas = document.createElement('canvas');
+          canvas.width = 96; canvas.height = 96;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.ellipse(48, 40, 40, 30, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(34, 62); ctx.lineTo(26, 86); ctx.lineTo(50, 66); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#d8293f'; ctx.font = '900 44px sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('！', 48, 42);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          const bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+          bubble.scale.set(.6, .6, 1);
+          bubble.position.y = .38; crown.add(bubble);
+        } else {
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.02, .035, .5, 6), antennaMaterial);
+          antenna.position.y = .25; crown.add(antenna);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), antennaTipMaterial);
+          tip.position.y = .52; crown.add(tip);
         }
       }
 
       function createBuilding(sub, index) {
         const paid = sub.price * sub.months;
-        const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
-        const detailed = sub.contracted;
+        const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.05;
+        const rand = seededRand(index + 1);
         const group = new THREE.Group();
         placeOnPlanet(group, sub.position[0], sub.position[1], -.01);
         group.rotateY((Math.random() - .5) * .6);
         group.userData = { sub, index, destroyed: false, decision: null, baseQuaternion: group.quaternion.clone(), baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
         group.scale.setScalar(.01);
 
-        const bodyHeight = height - .72;
-        const base = roundedBox(1.14, bodyHeight, 1.05, sub.color, bodyHeight / 2 + .08, detailed ? .08 : 0, detailed);
-        base.castShadow = sub.contracted;
-        base.userData.building = group;
-        group.add(base);
-        if (sub.contracted) clickableMeshes.push(base);
-        group.userData.body = base;
-        if (detailed) addWindows(group, 1.14, bodyHeight, bodyHeight / 2 + .08, sub);
+        const ledgeColor = sub.contracted ? sub.dark : 0x5a5e6b;
+        let body;
 
-        const upper = roundedBox(1.02, .72, .95, sub.dark, height - .3, detailed ? .08 : 0, detailed);
-        upper.castShadow = sub.contracted;
-        upper.userData.building = group;
-        group.add(upper);
-        if (sub.contracted) clickableMeshes.push(upper);
-        const roof = roundedBox(.82, .18, .76, sub.contracted ? 0x413267 : 0x55545d, height + .14, detailed ? .04 : 0, detailed);
-        roof.castShadow = sub.contracted;
-        group.add(roof);
-        if (detailed) {
-          const cap = roundedBox(.43, .18, .4, sub.color, height + .32, .03);
-          group.add(cap);
-          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .38, 7), new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.5 }));
-          antenna.position.y = height + .6; group.add(antenna);
+        if (!sub.contracted) {
+          if (index % 2 === 0) {
+            // 未契約その1: ひさしとドアのついた小さな商店
+            body = addTier(group, sub, rand, .98, .84, .8, .06);
+            addLedge(group, 1.06, .92, .9, ledgeColor);
+            const awning = new THREE.Mesh(awningGeometry, new THREE.MeshStandardMaterial({ color: awningColors[index % awningColors.length], roughness: .8 }));
+            awning.position.set(0, .56, .48);
+            awning.rotation.x = .35;
+            group.add(awning);
+            const door = new THREE.Mesh(doorGeometry, new THREE.MeshStandardMaterial({ color: 0x3a3f4e, roughness: .7 }));
+            door.position.set(-.24, .21, .43);
+            group.add(door);
+            addRoofProps(group, rand, .8, .66, .95);
+          } else {
+            // 未契約その2: 三角屋根の別荘と庭木
+            body = addTier(group, sub, rand, .82, .68, .52, .06);
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(.64, .42, 4), villaRoofMaterial);
+            roof.position.y = .8;
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            group.add(roof);
+            const chimney = new THREE.Mesh(new THREE.BoxGeometry(.1, .22, .1), crownDark);
+            chimney.position.set(.22, .84, -.12);
+            group.add(chimney);
+            const bush = new THREE.Mesh(new THREE.SphereGeometry(.14, 8, 6), bushMaterial);
+            bush.position.set(.5, .12, .32);
+            group.add(bush);
+            const bush2 = new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), bushMaterial);
+            bush2.position.set(-.48, .09, .28);
+            group.add(bush2);
+          }
+        } else if (getDistrictGenre(sub) === '学び') {
+          // 学び街: 鉛筆タワー(六角軸+木部+芯)
+          const bodyHeight = Math.max(1, height - .55);
+          const shaft = new THREE.Mesh(
+            new THREE.CylinderGeometry(.52, .52, bodyHeight, 6),
+            new THREE.MeshStandardMaterial({ color: sub.color, roughness: .62 })
+          );
+          shaft.position.y = bodyHeight / 2 + .08;
+          shaft.castShadow = true;
+          shaft.userData.building = group;
+          group.add(shaft);
+          clickableMeshes.push(shaft);
+          body = shaft;
+          const wood = new THREE.Mesh(new THREE.CylinderGeometry(.03, .52, .5, 6), woodMaterial);
+          wood.position.y = bodyHeight + .08 + .25;
+          group.add(wood);
+          const lead = new THREE.Mesh(new THREE.ConeGeometry(.13, .28, 6), crownDark);
+          lead.position.y = bodyHeight + .08 + .56;
+          group.add(lead);
+        } else if (getDistrictGenre(sub) === '通信') {
+          // 通信街: ビルの上に電波塔が伸びる
+          const bodyHeight = Math.max(1, height - .55);
+          const baseHeight = Math.max(.7, bodyHeight * .4);
+          body = addTier(group, sub, rand, 1.05, .95, baseHeight, .08);
+          addLedge(group, 1.14, 1.03, baseHeight + .11, ledgeColor);
+          const mastHeight = bodyHeight - baseHeight + .5;
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(.05, .17, mastHeight, 6), mastMaterial);
+          mast.position.y = baseHeight + .14 + mastHeight / 2;
+          mast.userData.building = group;
+          group.add(mast);
+          clickableMeshes.push(mast);
+          [.6, .85].forEach(fraction => {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(.16 + (1 - fraction) * .3, .024, 6, 14), crownCyan);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = baseHeight + .14 + mastHeight * fraction;
+            group.add(ring);
+          });
+          const beacon = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), crownRed);
+          beacon.position.y = baseHeight + .14 + mastHeight + .05;
+          group.add(beacon);
+          addRoofProps(group, rand, .9, .8, baseHeight + .12);
+        } else {
+          const bodyHeight = Math.max(1, height - .55);
+          const style = Math.floor(rand() * 3);
+          if (style === 0) {
+            // 段々ビル: 上にいくほど細くなるセットバック
+            const fractions = bodyHeight > 2.6 ? [.52, .3, .18] : [.6, .4];
+            const widths = [1.22, .98, .74];
+            const depths = [1.08, .88, .68];
+            let y = .08;
+            fractions.forEach((fraction, i) => {
+              const tierHeight = bodyHeight * fraction;
+              const mesh = addTier(group, sub, rand, widths[i], depths[i], tierHeight, y);
+              if (i === 0) body = mesh;
+              y += tierHeight;
+              addLedge(group, widths[i] + .1, depths[i] + .1, y + .02, ledgeColor);
+              y += .07;
+            });
+            addRoofProps(group, rand, .64, .56, y + .03);
+            addGenreCrown(group, sub, rand, y + .03);
+          } else if (style === 1) {
+            // クラウンタワー: 直胴の上に張り出した頂部と尖塔
+            const shaftHeight = bodyHeight * .8;
+            body = addTier(group, sub, rand, 1.04, .94, shaftHeight, .08);
+            addLedge(group, 1.14, 1.02, shaftHeight + .11, ledgeColor);
+            const crownHeight = bodyHeight * .2 + .08;
+            addTier(group, sub, rand, 1.24, 1.1, crownHeight, shaftHeight + .15);
+            const crownTop = shaftHeight + .15 + crownHeight;
+            addLedge(group, 1.32, 1.18, crownTop + .02, ledgeColor);
+            addRoofProps(group, rand, 1, .9, crownTop + .05);
+            addGenreCrown(group, sub, rand, crownTop + .05);
+          } else {
+            // ツイン棟: 高さ違いの2棟が寄り添う複合ビル
+            const annexHeight = bodyHeight * (.52 + rand() * .2);
+            body = addTier(group, sub, rand, .78, .96, bodyHeight, .08);
+            body.position.x = -.26;
+            addLedge(group, .88, 1.04, bodyHeight + .11, ledgeColor, -.26);
+            const annex = addTier(group, sub, rand, .64, .8, annexHeight, .08);
+            annex.position.set(.4, annexHeight / 2 + .08, -.04);
+            addLedge(group, .72, .88, annexHeight + .11, ledgeColor, .4, -.04);
+            addRoofProps(group, rand, .55, .7, annexHeight + .14, .4, -.04);
+            addGenreCrown(group, sub, rand, bodyHeight + .13, -.26);
+          }
         }
-        const sign = createSign(sub); sign.position.y = height - .3; sign.userData.building = group; group.add(sign);
+
+        group.userData.body = body;
+        const sign = createSign(sub);
+        sign.position.y = height - .3;
+        if (!sub.contracted) sign.scale.setScalar(.82);
+        sign.userData.building = group;
+        group.add(sign);
         if (sub.contracted) clickableMeshes.push(sign);
 
         const halo = new THREE.Mesh(new THREE.RingGeometry(.73, .89, 24), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
@@ -944,17 +1564,29 @@
         openingInterval = null;
       }
 
+      // 建設演出のあと、街が間近に見える距離までスッと寄る
+      function zoomIntoCity() {
+        cameraDistance = clampCameraDistance(innerWidth / innerHeight < .7 ? 33 : 30);
+        viewTween = {
+          startedAt: performance.now(),
+          duration: 1500,
+          from: { ...cameraView },
+          to: { distance: cameraDistance, targetX: 0, targetY: 1.2, targetZ: 0 }
+        };
+      }
+
       function finishOpeningImmediately() {
         if (!openingRunning) return;
         clearOpeningTimers();
         buildings.forEach(building => {
           building.userData.buildBorn = null;
-          building.scale.setScalar(1);
+          building.scale.setScalar(BUILDING_SCALE);
         });
         treeVisible = true;
         savingsTree.scale.setScalar(1);
         openingRunning = false;
         opening.classList.remove('visible', 'building');
+        zoomIntoCity();
       }
 
       function beginCityBuild() {
@@ -962,20 +1594,20 @@
         clearInterval(openingInterval);
         openingInterval = null;
         opening.classList.add('building');
-        scanMessage.textContent = '🏙️ サブスク地図を建設中…';
-        mailCount.textContent = String(subscriptions.length);
-        mailLabel.textContent = '見つかったサービスを街に並べています';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '🏙️ サブスク地図を建設中…';
+        mailCount.textContent = String(scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length);
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '見つかったサービスを街に並べています';
         const buildOrder = districts.flatMap(district =>
-          buildings.filter(building => building.userData.sub.genre === district.genre)
+          buildings.filter(building => getDistrictGenre(building.userData.sub) === district.genre)
         );
         buildOrder.forEach((building, index) => {
           scheduleOpening(() => {
             if (!openingRunning) return;
             building.userData.buildBorn = performance.now();
             playSound('nyu1', .2);
-          }, index * 80);
+          }, index * 60);
         });
-        const lastBuildingAt = (buildOrder.length - 1) * 80;
+        const lastBuildingAt = (buildOrder.length - 1) * 60;
         scheduleOpening(() => {
           if (!openingRunning) return;
           treeVisible = true;
@@ -987,6 +1619,7 @@
           if (!openingRunning) return;
           openingRunning = false;
           opening.classList.remove('visible', 'building');
+          zoomIntoCity();
         }, lastBuildingAt + 920);
       }
 
@@ -994,37 +1627,27 @@
         openingRunning = true;
         opening.classList.remove('building');
         opening.classList.add('visible');
-        scanMessage.textContent = scanResult
-          ? '📩 あなたのGmailのスキャン結果を読み込み中…'
-          : '📩 Gmailをスキャン中…';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '📩 Gmailをスキャン中…';
         mailCount.textContent = '0';
-        mailLabel.textContent = '請求メールを確認しています';
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '請求メールを確認しています';
         scheduleOpening(() => {
           let count = 0;
           openingInterval = setInterval(() => {
-            count = Math.min(subscriptions.length, count + 1);
+            const targetCount = scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length;
+            count = Math.min(targetCount, count + 1);
             mailCount.textContent = String(count);
-            if (count === subscriptions.length) {
+            if (count === targetCount) {
               clearInterval(openingInterval);
               openingInterval = null;
             }
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          if (scanResult) {
-            const total = scanResult.subs.reduce((sum, sub) => {
-              const price = Number(sub.price);
-              return sum + (Number.isFinite(price) ? price : 0);
-            }, 0);
-            scanMessage.textContent = `契約サブスク ${scanResult.subs.length}本・月額合計 ${formatYen(total)} を検出`;
-          } else {
-            scanMessage.textContent = '契約中サブスク 13本 発見';
-            mailLabel.textContent = '同じジャンルの重複も見つかりました';
-          }
+          scanMessage.textContent = scanMode
+            ? 'スキャン済みデータから街を再建中…'
+            : `契約中サブスク ${subscriptions.filter(sub => sub.contracted).length}本 発見`;
+          mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '同じジャンルの重複も見つかりました';
         }, 1750);
-        if (scanResult) scheduleOpening(() => {
-          scanMessage.textContent = 'デモの街で再現します';
-        }, 2200);
         scheduleOpening(beginCityBuild, 2450);
       }
 
@@ -1038,7 +1661,7 @@
         mesh.position.set(...position);
         if (scale) mesh.scale.set(...scale);
         if (rotation) mesh.rotation.set(...rotation);
-        mesh.castShadow = true;
+        mesh.castShadow = false;
         savingsTree.add(mesh);
         return mesh;
       }
@@ -1127,7 +1750,201 @@
       const savingsTreeBaseQuaternion = placeOnPlanet(savingsTree, 0, 10.1, 0);
       rebuildSavingsTree(0);
 
-      const clampCameraDistance = value => Math.max(20, Math.min(52, value));
+      // ---- ともだちの星: 地平線のちょうど向こう側に、登録してくれた友達の惑星が覗いている ----
+      // 位置はデフォルトカメラから見て自分の惑星のシルエット上端に接するよう計算した固定座標。
+      // 遠景の霧で消えないよう、この星のマテリアルはfogを切って淡い色にしてある。
+      const FRIEND_PLANET_RADIUS = 5;
+      const friend = {
+        name: 'ヒロ', // 登録済みの友達(モックデータ)
+        subs: [
+          { icon: '🎬', name: 'MOOVA', price: 1190, color: 0xf05252 },
+          { icon: '🎵', name: 'BEATLY', price: 980, color: 0x3299db },
+          { icon: '💎', name: 'GEMPOP', price: 1280, color: 0xa54cce },
+          { icon: '🤖', name: 'CHATTY', price: 3900, color: 0xe36568 },
+          { icon: '📚', name: 'COMICON', price: 980, color: 0xf06b8d }
+        ].map(sub => ({ ...sub, cancelled: false, mesh: null }))
+      };
+      const friendPlanet = new THREE.Group();
+      friendPlanet.position.set(-22, -25.5, -26);
+      // 画面上方向(カメラから見たシルエットの外側)を友達の星の「上」にして、覗いた部分に街が見えるようにする
+      const friendUp = new THREE.Vector3(-.5554, .5024, -.6626).normalize();
+      const friendBaseQuaternion = new THREE.Quaternion().setFromUnitVectors(PLANET_UP, friendUp);
+      friendPlanet.quaternion.copy(friendBaseQuaternion);
+      scene.add(friendPlanet);
+      const friendGlobe = new THREE.Mesh(
+        new THREE.SphereGeometry(FRIEND_PLANET_RADIUS, 36, 24),
+        new THREE.MeshStandardMaterial({ color: 0x7cbfa4, roughness: .85, fog: false })
+      );
+      friendPlanet.add(friendGlobe);
+      // タップ判定用の少し大きい不可視球
+      const friendHitSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(FRIEND_PLANET_RADIUS + 1.3, 12, 8),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      friendPlanet.add(friendHitSphere);
+      function placeOnFriendPlanet(object, tilt, azimuth, lift = 0) {
+        const normal = new THREE.Vector3(
+          Math.sin(tilt) * Math.cos(azimuth),
+          Math.cos(tilt),
+          Math.sin(tilt) * Math.sin(azimuth)
+        );
+        object.quaternion.setFromUnitVectors(PLANET_UP, normal);
+        object.position.copy(normal).multiplyScalar(FRIEND_PLANET_RADIUS + lift);
+        friendPlanet.add(object);
+      }
+      friend.subs.forEach((sub, index) => {
+        const height = .9 + sub.price / 3900 * 1.7;
+        const mini = new THREE.Group();
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(.85, height, .8),
+          new THREE.MeshStandardMaterial({ color: sub.color, roughness: .6, fog: false })
+        );
+        body.position.y = height / 2;
+        mini.add(body);
+        const roof = new THREE.Mesh(
+          new THREE.BoxGeometry(.6, .2, .55),
+          new THREE.MeshStandardMaterial({ color: 0x413267, roughness: .6, fog: false })
+        );
+        roof.position.y = height + .1;
+        mini.add(roof);
+        placeOnFriendPlanet(mini, .38 + (index % 2) * .32, index / friend.subs.length * Math.PI * 2, -.02);
+        sub.mesh = mini;
+      });
+      const friendLeafMaterial = new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85, fog: false });
+      for (let i = 0; i < 6; i += 1) {
+        const tree = new THREE.Group();
+        const leaf = new THREE.Mesh(new THREE.ConeGeometry(.24, .6, 6), friendLeafMaterial);
+        leaf.position.y = .3;
+        tree.add(leaf);
+        placeOnFriendPlanet(tree, .55 + Math.random() * .65, Math.random() * Math.PI * 2, 0);
+      }
+      function createFriendSprite(draw, width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        draw(canvas.getContext('2d'));
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        return new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, fog: false, depthTest: true }));
+      }
+      const friendLabel = createFriendSprite(ctx => {
+        ctx.fillStyle = 'rgba(32, 22, 84, .92)'; ctx.fillRect(0, 0, 640, 150);
+        ctx.strokeStyle = '#8fd0ff'; ctx.lineWidth = 9; ctx.strokeRect(5, 5, 630, 140);
+        ctx.fillStyle = '#fff8ed'; ctx.font = '900 56px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`🪐 ${friend.name}の星`, 320, 76);
+      }, 640, 150);
+      friendLabel.scale.set(7.4, 1.75, 1);
+      friendLabel.position.y = FRIEND_PLANET_RADIUS + 2.6;
+      friendPlanet.add(friendLabel);
+      // 勝手に解約されたとき、星のまわりを💢が回って怒りを表す
+      const friendAngryMark = createFriendSprite(ctx => {
+        ctx.font = '104px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('💢', 64, 70);
+      }, 128, 128);
+      friendAngryMark.scale.set(3.2, 3.2, 1);
+      friendAngryMark.position.set(3.1, FRIEND_PLANET_RADIUS - .6, 0);
+      friendAngryMark.visible = false;
+      friendPlanet.add(friendAngryMark);
+      let friendShake = 0;
+      let friendAngryUntil = 0;
+
+      const friendSheet = document.querySelector('#friend-sheet');
+      const friendSummary = document.querySelector('#friend-summary');
+      const friendList = document.querySelector('#friend-list');
+      const friendToast = document.querySelector('#friend-toast');
+      const friendCloseButton = document.querySelector('#friend-close');
+      let friendToastTimer = null;
+
+      function showFriendToast(message) {
+        friendToast.textContent = message;
+        friendToast.classList.add('visible');
+        clearTimeout(friendToastTimer);
+        friendToastTimer = setTimeout(() => friendToast.classList.remove('visible'), 2600);
+      }
+
+      function renderFriendSheet() {
+        const remaining = friend.subs.filter(sub => !sub.cancelled);
+        friendSummary.textContent = remaining.length > 0
+          ? `${friend.name}は 月額 ${formatYen(remaining.reduce((sum, sub) => sum + sub.price, 0))} 払っています`
+          : `${friend.name}の星は更地になりました…📞鬼電が鳴っています`;
+        friendList.innerHTML = '';
+        friend.subs.forEach((sub, index) => {
+          const row = document.createElement('li');
+          row.className = sub.cancelled ? 'friend-row cancelled' : 'friend-row';
+          const label = document.createElement('span');
+          label.className = 'friend-sub-label';
+          label.textContent = `${sub.icon} ${sub.name}`;
+          const price = document.createElement('span');
+          price.className = 'friend-sub-price';
+          price.textContent = sub.cancelled ? '解約済み' : `${formatYen(sub.price)}/月`;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'friend-cancel';
+          button.textContent = sub.cancelled ? '🔥' : '💣 勝手に解約';
+          button.disabled = sub.cancelled;
+          button.addEventListener('click', () => cancelFriendSub(index));
+          row.append(label, price, button);
+          friendList.appendChild(row);
+        });
+      }
+
+      function openFriendSheet() {
+        clearSelection();
+        renderFriendSheet();
+        friendSheet.classList.add('visible');
+        playSound('item-get1', .5);
+      }
+
+      function closeFriendSheet() {
+        friendSheet.classList.remove('visible');
+      }
+      friendCloseButton.addEventListener('click', closeFriendSheet);
+
+      function explodeFriendBuilding(sub) {
+        if (!sub.mesh || !sub.mesh.visible) return;
+        const origin = new THREE.Vector3();
+        sub.mesh.getWorldPosition(origin);
+        const debrisMaterial = new THREE.MeshStandardMaterial({ color: sub.color, roughness: .55, fog: false });
+        for (let i = 0; i < 16; i += 1) {
+          const size = .14 + Math.random() * .2;
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), debrisMaterial);
+          piece.position.copy(origin);
+          scene.add(piece);
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.5 + Math.random() * 3;
+          particles.push({ mesh: piece, velocity: new THREE.Vector3(Math.cos(angle) * speed, 2.5 + Math.random() * 4, Math.sin(angle) * speed), spin: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9), life: .9 + Math.random() * .3, coin: false });
+        }
+        const burst = new THREE.PointLight(0xff9b21, 40, 9);
+        burst.position.copy(origin);
+        scene.add(burst);
+        particles.push({ light: burst, life: .4 });
+        sub.mesh.visible = false;
+      }
+
+      function friendReaction() {
+        const lines = [
+          `😈 ${friend.name}に解約通知が届きました…`,
+          `💢 ${friend.name}が異変に気づいたようです`,
+          `📞 ${friend.name}から着信があります(出ないでおきましょう)`,
+          `🚀 ${friend.name}がこちらの星に向かっています!!`,
+          `🔥 ${friend.name}との友情が解約されました`
+        ];
+        return lines[Math.min(friend.subs.filter(sub => sub.cancelled).length - 1, lines.length - 1)];
+      }
+
+      function cancelFriendSub(index) {
+        const sub = friend.subs[index];
+        if (sub.cancelled) return;
+        sub.cancelled = true;
+        explodeFriendBuilding(sub);
+        friendShake = 1;
+        friendAngryUntil = performance.now() + 2600;
+        playSound('big-explosion1', .55);
+        setTimeout(showCancelStamp, 250);
+        showFriendToast(friendReaction());
+        renderFriendSheet();
+      }
+
+      const clampCameraDistance = value => Math.max(24, Math.min(70, value));
 
       // 選択したビルが惑星の頂上(画面中央)に来るよう惑星ごと回す
       let planetTween = null;
@@ -1162,13 +1979,20 @@
         startCameraTween(null);
       }
 
+      function setBodyEmissive(building, hex, intensity) {
+        const materials = building.userData.body.material;
+        (Array.isArray(materials) ? materials : [materials]).forEach(material => {
+          material.emissive.setHex(hex);
+          material.emissiveIntensity = intensity;
+        });
+      }
+
       function createKeepDecoration(building) {
         if (building.userData.keepDecoration) {
           building.userData.keepDecoration.visible = true;
           building.userData.keepDecoration.scale.setScalar(.01);
           building.userData.keepDecoration.userData.born = performance.now();
-          building.userData.body.material.emissive.setHex(0x16854b);
-          building.userData.body.material.emissiveIntensity = .75;
+          setBodyEmissive(building, 0x16854b, .75);
           return;
         }
         const mini = new THREE.Group();
@@ -1186,8 +2010,7 @@
         mini.userData.born = performance.now();
         building.add(mini);
         building.userData.keepDecoration = mini;
-        building.userData.body.material.emissive.setHex(0x16854b);
-        building.userData.body.material.emissiveIntensity = .75;
+        setBodyEmissive(building, 0x16854b, .75);
       }
 
       function updateSheet() {
@@ -1207,7 +2030,7 @@
 
       function selectBuilding(building) {
         if (!building || building.userData.destroyed || !building.userData.sub.contracted) return;
-        playSound('kira2', .35);
+        playSound('item-get1', .5);
         const sameBuilding = selected === building;
         if (selected) selected.userData.halo.material.opacity = 0;
         selected = building;
@@ -1235,8 +2058,7 @@
         if (!selected || selected.userData.decision !== 'keep') return;
         selected.userData.decision = null;
         if (selected.userData.keepDecoration) selected.userData.keepDecoration.visible = false;
-        selected.userData.body.material.emissive.setHex(0x000000);
-        selected.userData.body.material.emissiveIntensity = 1;
+        setBodyEmissive(selected, 0x000000, 1);
         updateSheet();
         checkAllDecided();
       }
@@ -1262,8 +2084,19 @@
           !item.object.userData.building.userData.destroyed &&
           (!globeHit || item.distance < globeHit.distance + .5)
         );
-        if (hit) selectBuilding(hit.object.userData.building);
-        else clearSelection();
+        if (hit) {
+          closeFriendSheet();
+          selectBuilding(hit.object.userData.building);
+          return;
+        }
+        // 地平線の向こうの友達の星をタップしたらサブスク一覧を開く
+        const friendHit = raycaster.intersectObject(friendHitSphere, false)[0];
+        if (friendHit && (!globeHit || friendHit.distance < globeHit.distance)) {
+          openFriendSheet();
+          return;
+        }
+        clearSelection();
+        closeFriendSheet();
       }
       renderer.domElement.addEventListener('pointerup', pick);
       renderer.domElement.addEventListener('dblclick', event => {
@@ -1333,7 +2166,7 @@
         pinchActive = false;
       }, { passive: true });
 
-      function playSound(name, volume = 1, maxSeconds) {
+      function playSound(name, volume = 1) {
         const buffer = audioBuffers[name];
         if (audioContext && buffer) {
           const source = audioContext.createBufferSource(); // AudioBufferSourceNode（再生ごとに生成して重複可）
@@ -1342,12 +2175,6 @@
           gain.gain.value = volume;
           source.connect(gain).connect(audioContext.destination);
           source.start();
-          if (maxSeconds) {
-            const t = audioContext.currentTime;
-            gain.gain.setValueAtTime(volume, t + Math.max(0, maxSeconds - .25));
-            gain.gain.linearRampToValueAtTime(0, t + maxSeconds);
-            source.stop(t + maxSeconds + .02);
-          }
           return;
         }
         const fallback = sounds[name].cloneNode();
@@ -1359,7 +2186,7 @@
         const sub = building.userData.sub;
         const origin = new THREE.Vector3();
         building.getWorldPosition(origin);
-        origin.y += building.userData.height * .48;
+        origin.y += building.userData.height * .48 * BUILDING_SCALE;
         const debrisMaterial = new THREE.MeshStandardMaterial({ color: sub.color, roughness: .55, emissive: sub.dark, emissiveIntensity: .18 });
         for (let i = 0; i < 50; i += 1) {
           const size = .16 + Math.random() * .32;
@@ -1391,6 +2218,7 @@
           new THREE.MeshStandardMaterial({ color: 0x242737, roughness: .96, metalness: 0 })
         );
         lot.receiveShadow = true;
+        lot.scale.setScalar(BUILDING_SCALE);
         const sub = building.userData.sub;
         placeOnPlanet(lot, sub.position[0], sub.position[1], .04);
       }
@@ -1454,8 +2282,9 @@
         destroyArmed = false;
         createExplosion(building);
         cameraShake = 1;
-        playSound('big-explosion1', 1, 1.1);
-        setTimeout(showCancelStamp, 450);
+        playSound('big-explosion1');
+        setTimeout(() => playSound('building-collapse-little1', .48), 300);
+        setTimeout(showCancelStamp, 400);
         flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
         building.visible = false;
         sheet.classList.remove('visible');
@@ -1466,8 +2295,8 @@
         clearSelection();
         updateDuplicateBadges();
         updateContractHeader();
-        setTimeout(() => playSound('money-drop1', .8), 750);
-        setTimeout(() => playSound('amount-display1', .7), 1100);
+        setTimeout(() => playSound('money-drop1', .9), 270);
+        setTimeout(() => playSound('amount-display1', .78), 680);
         checkAllDecided();
       }
 
@@ -1524,10 +2353,15 @@
       startButton.addEventListener('click', startExperience);
 
       const clock = new THREE.Clock();
+      const openingSpin = new THREE.Quaternion();
       function render(now) {
         requestAnimationFrame(render);
         const dt = Math.min(clock.getDelta(), .035);
         const time = now * .001;
+        if (openingRunning) {
+          openingSpin.setFromAxisAngle(PLANET_UP, dt * .38);
+          planet.quaternion.premultiply(openingSpin);
+        }
         if (viewTween) {
           const progress = Math.min(1, (performance.now() - viewTween.startedAt) / viewTween.duration);
           const eased = progress < .5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
@@ -1546,7 +2380,7 @@
           if (building.userData.buildBorn != null) {
             const buildAge = Math.min(1, (performance.now() - building.userData.buildBorn) / 340);
             const buildBounce = 1 + Math.sin(buildAge * Math.PI * 2.5) * (1 - buildAge) * .18;
-            building.scale.setScalar(Math.max(.01, buildAge * buildBounce));
+            building.scale.setScalar(Math.max(.01, buildAge * buildBounce) * BUILDING_SCALE);
             if (buildAge === 1) building.userData.buildBorn = null;
           }
           if (building === selected && !building.userData.destroyed) {
@@ -1577,6 +2411,19 @@
           const pulse = 1 + Math.sin(time * 9 + phase) * .18;
           mark.scale.set(.42 * pulse, .42 * pulse, 1);
         });
+        // 友達の星: ゆっくり自転し、勝手に解約されるとプルプル怒る
+        friendPlanet.quaternion.copy(friendBaseQuaternion);
+        friendPlanet.rotateY(time * .12);
+        if (friendShake > .01) {
+          friendPlanet.rotateZ((Math.random() - .5) * friendShake * .12);
+          friendPlanet.rotateX((Math.random() - .5) * friendShake * .12);
+          friendShake *= .9;
+        }
+        friendAngryMark.visible = performance.now() < friendAngryUntil;
+        if (friendAngryMark.visible) {
+          const angryPulse = 1 + Math.sin(time * 10) * .22;
+          friendAngryMark.scale.set(3.2 * angryPulse, 3.2 * angryPulse, 1);
+        }
         for (let i = particles.length - 1; i >= 0; i -= 1) {
           const particle = particles[i];
           particle.life -= dt;
@@ -1595,6 +2442,7 @@
             particles.splice(i, 1);
           }
         }
+        updateCars(time);
         if (treeVisible) {
           const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
           const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
