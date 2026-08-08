@@ -232,7 +232,7 @@
 
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">契約中 <span id="active-count">13本</span>　月額合計 <span id="contract-total">¥24,010</span></div>
+      <div class="counter-main">契約中 <span id="active-count">0本</span>　月額合計 <span id="contract-total">¥0</span></div>
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
@@ -274,51 +274,182 @@
       'use strict';
 
       const districts = [
-        { genre: 'AI', name: 'AI街', center: [-5.4, 5.7], size: [4.7, 4.6] },
-        { genre: '動画', name: '動画街', center: [0, -5.7], size: [4.9, 4.6] },
-        { genre: '音楽', name: '音楽街', center: [5.4, -5.7], size: [4.7, 4.6] },
-        { genre: 'ゲーム', name: 'ゲーム街', center: [0, 5.7], size: [4.7, 4.6] },
-        { genre: '学び', name: '学び街', center: [-5.4, 0], size: [4.7, 4.6] },
-        { genre: 'からだ', name: 'からだ街', center: [5.4, 5.7], size: [4.7, 4.6] },
-        { genre: 'マンガ', name: 'マンガ街', center: [-5.4, -5.7], size: [4.7, 4.6] },
-        { genre: 'クラウド', name: 'クラウド街', center: [0, 0], size: [4.7, 4.6] },
-        { genre: 'おかいもの', name: 'おかいもの街', center: [5.4, 0], size: [4.7, 4.6] }
+        { genre: 'AI', name: 'AI街', center: [-12, 6], size: [5.4, 5.4] },
+        { genre: 'ゲーム', name: 'ゲーム街', center: [-6, 6], size: [5.4, 5.4] },
+        { genre: 'からだ', name: 'からだ街', center: [0, 6], size: [5.4, 5.4] },
+        { genre: '通信', name: '通信街', center: [6, 6], size: [5.4, 5.4] },
+        { genre: 'ほけん', name: 'ほけん街', center: [12, 6], size: [5.4, 5.4] },
+        { genre: '学び', name: '学び街', center: [-12, 0], size: [5.4, 5.4] },
+        { genre: 'クラウド', name: 'クラウド街', center: [-6, 0], size: [5.4, 5.4] },
+        { genre: 'おかいもの', name: 'おかいもの街', center: [0, 0], size: [5.4, 5.4] },
+        { genre: 'ごはん', name: 'ごはん街', center: [6, 0], size: [5.4, 5.4] },
+        { genre: 'ニュース', name: 'ニュース街', center: [12, 0], size: [5.4, 5.4] },
+        { genre: 'マンガ', name: 'マンガ街', center: [-12, -6], size: [5.4, 5.4] },
+        { genre: '動画', name: '動画街', center: [-6, -6], size: [5.4, 5.4] },
+        { genre: '音楽', name: '音楽街', center: [0, -6], size: [5.4, 5.4] }
       ];
-      const subscriptions = [
-        { name: 'ChatGPT', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-6.75, 5] },
-        { name: 'Claude', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-5.4, 5] },
-        { name: 'Midjourney', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-4.05, 5] },
-        { name: 'Gemini', icon: '✨', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.1, 6.4] },
-        { name: 'Copilot', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.7, 6.4] },
-        { name: 'Netflix', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-1.45, -6.4] },
-        { name: 'Disney+', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [0, -6.4] },
-        { name: 'Prime Video', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -6.4] },
-        { name: 'U-NEXT', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-1.45, -5] },
-        { name: 'dアニメストア', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [0, -5] },
-        { name: 'ABEMA', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [1.45, -5] },
-        { name: 'Spotify', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [4.7, -6.4] },
-        { name: 'Apple Music', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [6.1, -6.4] },
-        { name: 'YouTube Music', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [4.7, -5] },
-        { name: 'Amazon Music', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [6.1, -5] },
-        { name: 'Switch Online', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-1.35, 5.3] },
-        { name: 'PS Plus', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [0, 5.3] },
-        { name: 'Game Pass', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [1.35, 5.3] },
-        { name: 'Duolingo', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-6.75, -.4] },
-        { name: 'スタディサプリ', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-5.4, -.4] },
-        { name: 'Udemy', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-4.05, -.4] },
-        { name: 'エニタイム', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [4.05, 5.3] },
-        { name: 'chocoZAP', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [5.4, 5.3] },
-        { name: 'Calm', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [6.75, 5.3] },
-        { name: '少年ジャンプ＋', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-6.75, -6.4] },
-        { name: 'ピッコマ', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.4, -6.4] },
-        { name: 'LINEマンガ', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.05, -6.4] },
-        { name: 'Google One', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-1.35, -.4] },
-        { name: 'Dropbox', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [0, -.4] },
-        { name: 'iCloud+', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -.4] },
-        { name: 'Amazonプライム', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
-        { name: '楽天プレミアム', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
+      const parkBlocks = [
+        { name: 'みどり公園', center: [6, -6], size: [5.4, 5.4] },
+        { name: 'ひろば公園', center: [12, -6], size: [5.4, 5.4] }
       ];
-      // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす
+      const mockSubscriptions = [
+        { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-13.7, 4.75] },
+        { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-12, 4.75] },
+        { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-10.3, 4.75] },
+        { name: 'VOICEMO', icon: '🎙️', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-12.85, 7.05] },
+        { name: 'CODEPAL', icon: '💻', genre: 'AI', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-11.15, 7.05] },
+        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [-7, 4.75] },
+        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-6, 4.75] },
+        { name: 'CLOUDPLAY', icon: '☁️', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [-5, 4.75] },
+        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [-1, 4.75] },
+        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [0, 4.75] },
+        { name: 'SLEEPLY', icon: '🌙', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [1, 4.75] },
+        { name: 'SIMBER', icon: '📶', genre: '通信', contracted: true, price: 2970, months: 30, color: 0xd84f62, dark: 0x8c344f, position: [4.4, 4.75] },
+        { name: 'LINKPOP', icon: '🔗', genre: '通信', contracted: false, price: 0, months: 0, color: 0xc66b9f, dark: 0x75486f, position: [6, 4.75] },
+        { name: 'WIFLY', icon: '🛜', genre: '通信', contracted: false, price: 0, months: 0, color: 0xc75f86, dark: 0x79435f, position: [7.6, 4.75] },
+        { name: 'MAMORUN', icon: '🛡️', genre: 'ほけん', contracted: true, price: 1490, months: 36, color: 0xe16c74, dark: 0x914c68, position: [11.15, 4.75] },
+        { name: 'ANSHINDO', icon: '🏥', genre: 'ほけん', contracted: false, price: 0, months: 0, color: 0x9c84aa, dark: 0x5d5878, position: [12.85, 4.75] },
+        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-13.7, -1.25] },
+        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-12, -1.25] },
+        { name: 'BRAINGO', icon: '🧩', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-10.3, -1.25] },
+        { name: 'DRIVEBOX', icon: '☁️', genre: 'クラウド', contracted: true, price: 250, months: 48, color: 0x4cbbd5, dark: 0x286894, position: [-7.2, -1.25] },
+        { name: 'SYNCLY', icon: '🔄', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-6, -1.25] },
+        { name: 'VAULTIE', icon: '🔐', genre: 'クラウド', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-4.8, -1.25] },
+        { name: 'PRIMEGO', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [-.85, -1.25] },
+        { name: 'SHOPPLE', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [.85, -1.25] },
+        { name: 'BENTOGO', icon: '🍱', genre: 'ごはん', contracted: true, price: 3980, months: 6, color: 0xed7f5d, dark: 0xb94d4f, position: [4.3, -1.25] },
+        { name: 'MEALPON', icon: '🥘', genre: 'ごはん', contracted: false, price: 0, months: 0, color: 0xd98569, dark: 0x8d554f, position: [6, -1.25] },
+        { name: 'DELISH', icon: '🍜', genre: 'ごはん', contracted: false, price: 0, months: 0, color: 0xdf5d73, dark: 0x8c465d, position: [7.7, -1.25] },
+        { name: 'ASAYOMI', icon: '📰', genre: 'ニュース', contracted: true, price: 1980, months: 24, color: 0xe66e5e, dark: 0x9c4b58, position: [11.15, -1.25] },
+        { name: 'MAGPACK', icon: '📚', genre: 'ニュース', contracted: false, price: 0, months: 0, color: 0xc17d95, dark: 0x704f70, position: [12.85, -1.25] },
+        { name: 'COMICON', icon: '📚', genre: 'マンガ', contracted: true, price: 980, months: 20, color: 0xf06b8d, dark: 0x9a3c75, position: [-13.7, -7.25] },
+        { name: 'INKPOP', icon: '🖋️', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-12, -7.25] },
+        { name: 'TOONBOX', icon: '🎭', genre: 'マンガ', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-10.3, -7.25] },
+        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 1190, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-7.7, -7.25] },
+        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [-6, -7.25] },
+        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.3, -7.25] },
+        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-6.85, -4.95] },
+        { name: 'ANIMEBOX', icon: '🌸', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.15, -4.95] },
+        { name: 'SHORTIN', icon: '📱', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.15, -5.75] },
+        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [-1.3, -7.25] },
+        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [.6, -7.25] },
+        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-1.1, -4.95] },
+        { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [.85, -4.95] }
+      ];
+      const knownGenres = new Set(districts.map(district => district.genre));
+      const otherDistrictCenter = [6, -6];
+      const scanSlotOffsets = [
+        [-2.1, -1.25], [-.7, -1.25], [.7, -1.25], [2.1, -1.25],
+        [-2.1, 1.05], [-.7, 1.05], [.7, 1.05], [2.1, 1.05]
+      ];
+      let subscriptions = mockSubscriptions;
+      let scanMode = false;
+      let scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+
+      function scanDistrictGenre(genre) {
+        return knownGenres.has(genre) ? genre : 'そのほか';
+      }
+
+      function getDistrictGenre(sub) {
+        return sub.districtGenre || sub.genre;
+      }
+
+      function scanPositionFor(genre, index) {
+        const district = knownGenres.has(genre)
+          ? districts.find(item => item.genre === genre)
+          : { center: otherDistrictCenter };
+        const offset = scanSlotOffsets[index % scanSlotOffsets.length];
+        return [district.center[0] + offset[0], district.center[1] + offset[1]];
+      }
+
+      function scanPaletteFor(genre, index) {
+        const candidates = mockSubscriptions.filter(sub => sub.contracted && sub.genre === genre);
+        const palette = candidates.length
+          ? candidates[index % candidates.length]
+          : mockSubscriptions.filter(sub => sub.contracted)[index % mockSubscriptions.filter(sub => sub.contracted).length];
+        return { color: palette.color, dark: palette.dark };
+      }
+
+      function readScanData() {
+        try {
+          if (/(?:^|[?&])mock=1(?:&|$)/.test(location.search)) return null;
+          const raw = localStorage.getItem('zencut-scan');
+          if (raw == null) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object' || !Number.isFinite(parsed.at) || !Array.isArray(parsed.subs)) {
+            throw new Error('atまたはsubs配列がありません');
+          }
+          if (parsed.subs.length === 0) return null;
+          parsed.subs.forEach((sub, index) => {
+            if (!sub || typeof sub !== 'object'
+              || typeof sub.name !== 'string' || !sub.name.trim()
+              || typeof sub.icon !== 'string' || !sub.icon
+              || typeof sub.genre !== 'string' || !sub.genre.trim()
+              || sub.contracted !== true
+              || !Number.isFinite(sub.price) || sub.price < 0
+              || !Number.isFinite(sub.months) || sub.months < 0) {
+              throw new Error(`subs[${index}]の形式が不正です`);
+            }
+          });
+          return parsed.subs.map(sub => ({
+            name: sub.name.trim(),
+            icon: sub.icon,
+            genre: sub.genre.trim(),
+            contracted: true,
+            price: sub.price,
+            months: sub.months
+          }));
+        } catch (error) {
+          console.warn('zencut-scanを読み込めないためモックデータで起動します', error);
+          return null;
+        }
+      }
+
+      function applyScanData(scanSubs) {
+        if (!scanSubs) return;
+        const grouped = new Map();
+        scanSubs.forEach(sub => {
+          const districtGenre = scanDistrictGenre(sub.genre);
+          if (!grouped.has(districtGenre)) grouped.set(districtGenre, []);
+          grouped.get(districtGenre).push({ ...sub, districtGenre });
+        });
+        const accepted = [];
+        [...knownGenres, 'そのほか'].forEach(genre => {
+          const group = grouped.get(genre) || [];
+          group.sort((a, b) => b.price - a.price);
+          group.slice(0, 4).forEach((sub, index) => {
+            const palette = scanPaletteFor(genre, index);
+            accepted.push({
+              ...sub,
+              ...palette,
+              position: scanPositionFor(genre, index)
+            });
+          });
+        });
+        subscriptions = [
+          ...mockSubscriptions.filter(sub => !sub.contracted),
+          ...accepted
+        ];
+        scanMode = true;
+        scanSubscriptionCount = scanSubs.length;
+        if (grouped.has('そのほか') && grouped.get('そのほか').length > 0) {
+          districts.push({ genre: 'そのほか', name: 'そのほか街', center: otherDistrictCenter, size: [5.4, 5.4] });
+        }
+      }
+
+      function initializeStartupData() {
+        try {
+          applyScanData(readScanData());
+        } catch (error) {
+          console.warn('スキャンデータの適用に失敗したためモックデータで起動します', error);
+          subscriptions = mockSubscriptions;
+          scanMode = false;
+          scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+        }
+      }
+
+      initializeStartupData();
+      // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす(モック/スキャンどちらの配置にも適用)
       subscriptions.forEach(sub => {
         sub.position[0] += (Math.random() - .5) * .56;
         sub.position[1] += (Math.random() - .5) * .56;
@@ -367,7 +498,7 @@
       const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0xa5d2f0, 34, 70);
+      scene.fog = new THREE.Fog(0xa5d2f0, 40, 78);
       const camera = new THREE.PerspectiveCamera(innerWidth / innerHeight < .7 ? 52 : 42, innerWidth / innerHeight, .1, 100);
       const CAMERA_AZIMUTH = THREE.MathUtils.degToRad(40);
       const CAMERA_ELEVATION = THREE.MathUtils.degToRad(50);
@@ -396,7 +527,7 @@
 
       // 小惑星ワールド: 街は大きな球体の表面に載っていて、ドラッグで回すと
       // 地平線の向こうから別の街が現れる
-      const PLANET_RADIUS = 10;
+      const PLANET_RADIUS = 16;
       const planet = new THREE.Group();
       planet.position.y = -PLANET_RADIUS;
       scene.add(planet);
@@ -424,7 +555,7 @@
       planet.add(globe);
 
       const districtMonthly = genre => subscriptions
-        .filter(sub => sub.genre === genre && sub.contracted)
+        .filter(sub => getDistrictGenre(sub) === genre && sub.contracted)
         .reduce((sum, sub) => sum + sub.price, 0);
       const districtTotals = districts.map(district => districtMonthly(district.genre));
       const districtMin = Math.min(...districtTotals);
@@ -448,12 +579,12 @@
         ctx.strokeStyle = heatStyle.heat > .7 ? '#ffb7a5' : '#c8dcf2';
         ctx.lineWidth = 10; ctx.strokeRect(5, 5, 630, 150);
         ctx.fillStyle = '#fff8ed'; ctx.font = '900 52px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(`${district.name} ${formatYen(monthly)}/月`, 320, 82);
+        ctx.fillText(`${district.name} ${district.genre ? `${formatYen(monthly)}/月` : '・公園'}`, 320, 82);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
-        label.scale.set(3.15, .79, 1);
-        placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.05);
+        label.scale.set(2.75, .69, 1);
+        placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.12);
         return label;
       }
 
@@ -475,29 +606,39 @@
         return geometry;
       }
 
-      districts.forEach(district => {
-        const monthly = districtMonthly(district.genre);
-        const heatStyle = districtHeat(monthly);
+      const layoutBlocks = [
+        ...districts,
+        ...parkBlocks.filter(park => !districts.some(district => district.center[0] === park.center[0] && district.center[1] === park.center[1]))
+      ];
+      layoutBlocks.forEach(block => {
+        const monthly = block.genre ? districtMonthly(block.genre) : 0;
+        const heatStyle = block.genre ? districtHeat(monthly) : {
+          heat: 0,
+          color: new THREE.Color(0x3b765e),
+          background: 'rgba(42, 91, 72, .96)'
+        };
         const tile = new THREE.Mesh(
-          createDistrictZoneGeometry(district.size[0], district.size[1]),
+          createDistrictZoneGeometry(block.size[0], block.size[1]),
           new THREE.MeshStandardMaterial({ color: heatStyle.color, roughness: .82, metalness: .03 })
         );
         tile.receiveShadow = true;
-        placeOnPlanet(tile, district.center[0], district.center[1], .015);
+        placeOnPlanet(tile, block.center[0], block.center[1], .015);
         tile.rotateX(-Math.PI / 2);
-        createDistrictLabel(district, monthly, heatStyle);
+        createDistrictLabel(block, monthly, heatStyle);
       });
 
-      // 道路: 短いセグメントに割り、サインカーブで蛇行させて田舎道っぽく球面に沿わせる
+      // 道路: 相手の新レイアウト(縦4本・横2本)を、短いセグメントで蛇行させながら球面に沿わせる
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
       const roadSegmentX = new THREE.BoxGeometry(.82, .07, .44);
       const roadSegmentZ = new THREE.BoxGeometry(.44, .07, .82);
       const ROAD_STEP = .62;
       const roadPaths = [
-        { alongX: true, length: 17, cross: -2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: true, length: 17, cross: 2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 17.6, cross: -2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
-        { alongX: false, length: 17.6, cross: 2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 }
+        { alongX: false, length: 19, cross: -9, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
+        { alongX: false, length: 19, cross: -3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
+        { alongX: false, length: 19, cross: 3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
+        { alongX: false, length: 19, cross: 9, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
+        { alongX: true, length: 31, cross: -3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 },
+        { alongX: true, length: 31, cross: 3, phase: Math.random() * 6.3, amp: .2 + Math.random() * .15, freq: .42 + Math.random() * .18 }
       ];
       const roadLateral = (road, along) => road.cross + Math.sin(along * road.freq + road.phase) * road.amp;
       roadPaths.forEach(road => {
@@ -533,11 +674,11 @@
       // 惑星のランドマーク(湖・山・農園・村・花畑)の予定地。木はここを避ける
       const featureZones = [
         { x: 2, z: 16, r: 4.4 },
-        { x: 10.5, z: -4.5, r: 2.3 },
-        { x: -13.5, z: -8, r: 3.6 },
-        { x: -14.5, z: 7, r: 3.4 },
-        { x: 6, z: 20.5, r: 3.2 },
-        { x: 15, z: 11.5, r: 2.8 }
+        { x: -2, z: -14, r: 2.3 },
+        { x: -21, z: -13, r: 3.6 },
+        { x: -22, z: 8, r: 3.4 },
+        { x: 9, z: 22, r: 3.2 },
+        { x: 17, z: 13, r: 2.8 }
       ];
       const inFeature = (x, z) => featureZones.some(zone => Math.hypot(x - zone.x, z - zone.z) < zone.r);
       function plantTree(x, z, variant) {
@@ -553,15 +694,15 @@
         tree.scale.setScalar(.75 + Math.random() * .55);
         placeOnPlanet(tree, x, z, 0);
       }
-      for (let i = 0; i < 130; i += 1) {
+      for (let i = 0; i < 170; i += 1) {
         const angle = Math.random() * Math.PI * 2;
-        const radius = i < 46 ? 9.3 + Math.random() * 2.4 : 12 + Math.random() * (Math.PI * PLANET_RADIUS - 12.5);
+        const radius = i < 50 ? 19 + Math.random() * 2.8 : 22 + Math.random() * (Math.PI * PLANET_RADIUS - 22.5);
         plantTree(Math.cos(angle) * radius, Math.sin(angle) * radius, i);
       }
       // 街なかの空き地にもまばらに
-      for (let i = 0, planted = 0; i < 220 && planted < 26; i += 1) {
-        const x = (Math.random() - .5) * 17.4;
-        const z = (Math.random() - .5) * 17.4;
+      for (let i = 0, planted = 0; i < 420 && planted < 40; i += 1) {
+        const x = (Math.random() - .5) * 31;
+        const z = (Math.random() - .5) * 20;
         if (inDistrict(x, z) || nearRoad(x, z)) continue;
         plantTree(x, z, i);
         planted += 1;
@@ -680,11 +821,21 @@
 
       // featureZonesの座標と対応させて配置(木はそこを避けて生えている)
       createLake(2, 16, 4.6);
-      createLake(10.5, -4.5, 2.1);
-      createMountains(-13.5, -8);
-      createFarm(-14.5, 7);
-      createVillage(6, 20.5);
-      createMeadow(15, 11.5);
+      createLake(-2, -14, 2.1);
+      createMountains(-21, -13);
+      createFarm(-22, 8);
+      createVillage(9, 22);
+      createMeadow(17, 13);
+      // 公園ブロックには木を植えて憩いの場に
+      parkBlocks.forEach(park => {
+        for (let i = 0; i < 6; i += 1) {
+          plantTree(
+            park.center[0] + (Math.random() - .5) * (park.size[0] - 1.6),
+            park.center[1] + (Math.random() - .5) * (park.size[1] - 1.6),
+            i
+          );
+        }
+      });
 
       // 昼空: 星の代わりにぽっかり浮かぶ雲
       const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .88, fog: false });
@@ -700,6 +851,118 @@
         cloud.position.set((Math.random() - .5) * 30, 9 + Math.random() * 7, -8 - Math.random() * 8);
         scene.add(cloud);
       }
+
+      const fillerHouseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .8, metalness: 0 });
+      const fillerWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xfff0b2, emissive: 0xffa52f, emissiveIntensity: 1.8, roughness: .45 });
+      const fillerTrunkMaterial = new THREE.MeshStandardMaterial({ color: 0x765037, roughness: .95 });
+      const fillerLeafMaterial = new THREE.MeshStandardMaterial({ color: 0x58a976, vertexColors: true, roughness: .9 });
+      const fillerHouseIM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), fillerHouseMaterial, 40);
+      const fillerWindowIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.34, .18, .04), fillerWindowMaterial, 40);
+      const fillerTrunkIM = new THREE.InstancedMesh(new THREE.CylinderGeometry(.09, .13, 1, 5), fillerTrunkMaterial, 40);
+      const fillerLeafIM = new THREE.InstancedMesh(new THREE.ConeGeometry(.54, 1, 6), fillerLeafMaterial, 40);
+      [fillerHouseIM, fillerWindowIM, fillerTrunkIM, fillerLeafIM].forEach(mesh => {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.userData.filler = true;
+        scene.add(mesh);
+      });
+      const fillerMatrix = new THREE.Matrix4();
+      const fillerQuaternion = new THREE.Quaternion();
+      const fillerPosition = new THREE.Vector3();
+      const fillerScale = new THREE.Vector3();
+      const fillerOffset = new THREE.Vector3();
+      const fillerColor = new THREE.Color();
+      const housePalette = [0xf5d2c2, 0xe6c8e7, 0xc8dcf0, 0xcce8d3, 0xf7e1ae, 0xe1cff5];
+      const leafPalette = [0x4f9a68, 0x62ae76, 0x73b982, 0x478e70];
+      let fillerHouseCount = 0;
+      let fillerTreeCount = 0;
+      function addFillerHouse(x, z, rotation, height, color) {
+        if (fillerHouseCount >= 40) return;
+        fillerQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotation);
+        fillerPosition.set(x, height / 2 + .08, z);
+        fillerScale.set(1.05, height, .9);
+        fillerHouseIM.setMatrixAt(fillerHouseCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerHouseIM.setColorAt(fillerHouseCount, fillerColor.setHex(color));
+        fillerOffset.set(0, height * .58, .47).applyQuaternion(fillerQuaternion).add(fillerPosition);
+        fillerScale.set(1, 1, 1);
+        fillerWindowIM.setMatrixAt(fillerHouseCount, fillerMatrix.compose(fillerOffset, fillerQuaternion, fillerScale));
+        fillerHouseCount += 1;
+      }
+      function addFillerTree(x, z, height, color) {
+        if (fillerTreeCount >= 40) return;
+        fillerPosition.set(x, height * .32 + .08, z);
+        fillerScale.set(1, height * .64, 1);
+        fillerTrunkIM.setMatrixAt(fillerTreeCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerPosition.set(x, height * .86 + .08, z);
+        fillerScale.set(height * .68, height * .92, height * .68);
+        fillerLeafIM.setMatrixAt(fillerTreeCount, fillerMatrix.compose(fillerPosition, fillerQuaternion, fillerScale));
+        fillerLeafIM.setColorAt(fillerTreeCount, fillerColor.setHex(color));
+        fillerTreeCount += 1;
+      }
+      parkBlocks.forEach((block, blockIndex) => {
+        const [cx, cz] = block.center;
+        [[-1.8, -1.8], [0, -1.8], [1.8, -1.8], [-1.8, -.15], [1.8, -.15]].forEach(([x, z], index) => {
+          addFillerHouse(cx + x, cz + z, (index + blockIndex) % 2 ? .12 : -.12, 1.05 + (index % 2) * .18, housePalette[(index + blockIndex * 2) % housePalette.length]);
+        });
+        [[-1.75, 1.75], [0, 1.75], [1.75, 1.75], [0, .55]].forEach(([x, z], index) => {
+          addFillerTree(cx + x, cz + z, 1.05 + (index % 2) * .22, leafPalette[(index + blockIndex) % leafPalette.length]);
+        });
+      });
+      fillerHouseIM.count = fillerHouseCount;
+      fillerWindowIM.count = fillerHouseCount;
+      fillerTrunkIM.count = fillerTreeCount;
+      fillerLeafIM.count = fillerTreeCount;
+      [fillerHouseIM, fillerWindowIM, fillerTrunkIM, fillerLeafIM].forEach(mesh => {
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      });
+
+      const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .55, metalness: .08 });
+      const carTopMaterial = new THREE.MeshStandardMaterial({ color: 0xbed5e4, vertexColors: true, roughness: .45, metalness: .04 });
+      const carBodyIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.7, .28, 1.15), carBodyMaterial, 4);
+      const carTopIM = new THREE.InstancedMesh(new THREE.BoxGeometry(.54, .22, .54), carTopMaterial, 4);
+      carBodyIM.userData.filler = true;
+      carTopIM.userData.filler = true;
+      carBodyIM.castShadow = false; carBodyIM.receiveShadow = false;
+      carTopIM.castShadow = false; carTopIM.receiveShadow = false;
+      scene.add(carBodyIM); scene.add(carTopIM);
+      const cars = [
+        { axis: 'x', lane: -3, phase: 1.2, speed: 2.4, direction: 1, color: 0xf2756b },
+        { axis: 'x', lane: 3, phase: 16.4, speed: 2.1, direction: -1, color: 0x7ac9ea },
+        { axis: 'z', lane: -9, phase: 5.1, speed: 2.0, direction: 1, color: 0xffd36b },
+        { axis: 'z', lane: 9, phase: 13.2, speed: 2.3, direction: -1, color: 0xb8e58b }
+      ];
+      cars.forEach((car, index) => {
+        carBodyIM.setColorAt(index, fillerColor.setHex(car.color));
+        carTopIM.setColorAt(index, fillerColor.setHex(car.color));
+      });
+      carBodyIM.instanceMatrix.needsUpdate = true;
+      carTopIM.instanceMatrix.needsUpdate = true;
+      carBodyIM.instanceColor.needsUpdate = true;
+      carTopIM.instanceColor.needsUpdate = true;
+      const carQuaternion = new THREE.Quaternion();
+      const carPosition = new THREE.Vector3();
+      const carTopPosition = new THREE.Vector3();
+      const carUnitScale = new THREE.Vector3(1, 1, 1);
+      const carTopScale = new THREE.Vector3(.92, .82, .92);
+      function updateCars(time) {
+        cars.forEach((car, index) => {
+          const travel = (car.phase + time * car.speed * car.direction) % (car.axis === 'x' ? 30 : 18);
+          const distance = travel < 0 ? travel + (car.axis === 'x' ? 30 : 18) : travel;
+          const angle = car.axis === 'x'
+            ? (car.direction > 0 ? 0 : Math.PI)
+            : (car.direction > 0 ? Math.PI / 2 : -Math.PI / 2);
+          carQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+          if (car.axis === 'x') carPosition.set(distance - 15, .29, car.lane);
+          else carPosition.set(car.lane, .29, distance - 9);
+          carBodyIM.setMatrixAt(index, fillerMatrix.compose(carPosition, carQuaternion, carUnitScale));
+          carTopPosition.set(0, .22, -.07).applyQuaternion(carQuaternion).add(carPosition);
+          carTopIM.setMatrixAt(index, fillerMatrix.compose(carTopPosition, carQuaternion, carTopScale));
+        });
+        carBodyIM.instanceMatrix.needsUpdate = true;
+        carTopIM.instanceMatrix.needsUpdate = true;
+      }
+      updateCars(0);
 
       const buildings = [];
       const clickableMeshes = [];
@@ -723,7 +986,7 @@
       let openingInterval = null;
       const openingTimers = [];
       let treeVisible = false;
-      let cameraDistance = innerWidth / innerHeight < .7 ? 46 : 38;
+      let cameraDistance = innerWidth / innerHeight < .7 ? 62 : 52;
       let pinchActive = false;
       let pinchStartDistance = 0;
       let pinchStartCameraDistance = cameraDistance;
@@ -952,20 +1215,20 @@
         clearInterval(openingInterval);
         openingInterval = null;
         opening.classList.add('building');
-        scanMessage.textContent = '🏙️ サブスク地図を建設中…';
-        mailCount.textContent = String(subscriptions.length);
-        mailLabel.textContent = '見つかったサービスを街に並べています';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '🏙️ サブスク地図を建設中…';
+        mailCount.textContent = String(scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length);
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '見つかったサービスを街に並べています';
         const buildOrder = districts.flatMap(district =>
-          buildings.filter(building => building.userData.sub.genre === district.genre)
+          buildings.filter(building => getDistrictGenre(building.userData.sub) === district.genre)
         );
         buildOrder.forEach((building, index) => {
           scheduleOpening(() => {
             if (!openingRunning) return;
             building.userData.buildBorn = performance.now();
             playSound('nyu1', .2);
-          }, index * 80);
+          }, index * 60);
         });
-        const lastBuildingAt = (buildOrder.length - 1) * 80;
+        const lastBuildingAt = (buildOrder.length - 1) * 60;
         scheduleOpening(() => {
           if (!openingRunning) return;
           treeVisible = true;
@@ -984,23 +1247,26 @@
         openingRunning = true;
         opening.classList.remove('building');
         opening.classList.add('visible');
-        scanMessage.textContent = '📩 Gmailをスキャン中…';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '📩 Gmailをスキャン中…';
         mailCount.textContent = '0';
-        mailLabel.textContent = '請求メールを確認しています';
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '請求メールを確認しています';
         scheduleOpening(() => {
           let count = 0;
           openingInterval = setInterval(() => {
-            count = Math.min(subscriptions.length, count + 1);
+            const targetCount = scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length;
+            count = Math.min(targetCount, count + 1);
             mailCount.textContent = String(count);
-            if (count === subscriptions.length) {
+            if (count === targetCount) {
               clearInterval(openingInterval);
               openingInterval = null;
             }
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          scanMessage.textContent = '契約中サブスク 13本 発見';
-          mailLabel.textContent = '同じジャンルの重複も見つかりました';
+          scanMessage.textContent = scanMode
+            ? 'スキャン済みデータから街を再建中…'
+            : `契約中サブスク ${subscriptions.filter(sub => sub.contracted).length}本 発見`;
+          mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '同じジャンルの重複も見つかりました';
         }, 1750);
         scheduleOpening(beginCityBuild, 2450);
       }
@@ -1015,7 +1281,7 @@
         mesh.position.set(...position);
         if (scale) mesh.scale.set(...scale);
         if (rotation) mesh.rotation.set(...rotation);
-        mesh.castShadow = true;
+        mesh.castShadow = false;
         savingsTree.add(mesh);
         return mesh;
       }
@@ -1104,7 +1370,7 @@
       const savingsTreeBaseQuaternion = placeOnPlanet(savingsTree, 0, 10.1, 0);
       rebuildSavingsTree(0);
 
-      const clampCameraDistance = value => Math.max(20, Math.min(52, value));
+      const clampCameraDistance = value => Math.max(24, Math.min(70, value));
 
       // 選択したビルが惑星の頂上(画面中央)に来るよう惑星ごと回す
       let planetTween = null;
@@ -1567,6 +1833,7 @@
             particles.splice(i, 1);
           }
         }
+        updateCars(time);
         if (treeVisible) {
           const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
           const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
