@@ -318,6 +318,11 @@
         { name: 'Amazonプライム', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
         { name: '楽天プレミアム', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
       ];
+      // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす
+      subscriptions.forEach(sub => {
+        sub.position[0] += (Math.random() - .5) * .56;
+        sub.position[1] += (Math.random() - .5) * .56;
+      });
       const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'item-get1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -452,13 +457,19 @@
         return label;
       }
 
-      // 球面に沿って湾曲させた地区タイル(細分化した平面を放物近似で沈める)
+      // 地区タイル: 整いすぎないよう輪郭を波打たせたブロブ形状にして球面に沿わせる
       function createDistrictZoneGeometry(width, depth) {
-        const geometry = new THREE.PlaneGeometry(width, depth, 8, 8);
+        const THETA_SEGMENTS = 22;
+        const geometry = new THREE.RingGeometry(.001, 1, THETA_SEGMENTS, 6);
+        const bumps = Array.from({ length: THETA_SEGMENTS }, () => .8 + Math.random() * .34);
         const position = geometry.attributes.position;
         for (let i = 0; i < position.count; i += 1) {
           const vx = position.getX(i), vy = position.getY(i);
-          position.setZ(i, -(vx * vx + vy * vy) / (2 * PLANET_RADIUS));
+          const angle = Math.atan2(vy, vx);
+          const k = Math.round(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2 / THETA_SEGMENTS)) % THETA_SEGMENTS;
+          const px = vx * (width / 2) * bumps[k];
+          const py = vy * (depth / 2) * bumps[k];
+          position.setXYZ(i, px, py, -(px * px + py * py) / (2 * PLANET_RADIUS));
         }
         geometry.computeVertexNormals();
         return geometry;
@@ -477,22 +488,28 @@
         createDistrictLabel(district, monthly, heatStyle);
       });
 
-      // 道路は短いセグメントに割って球面に沿わせる
+      // 道路: 短いセグメントに割り、サインカーブで蛇行させて田舎道っぽく球面に沿わせる
       const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x555b64, roughness: .92 });
-      const roadSegmentX = new THREE.BoxGeometry(.72, .07, .46);
-      const roadSegmentZ = new THREE.BoxGeometry(.46, .07, .72);
-      [
-        { alongX: true, length: 16.6, cross: -2.85 },
-        { alongX: true, length: 16.6, cross: 2.85 },
-        { alongX: false, length: 17.3, cross: -2.7 },
-        { alongX: false, length: 17.3, cross: 2.7 }
-      ].forEach(road => {
-        const count = Math.ceil(road.length / .7);
+      const roadSegmentX = new THREE.BoxGeometry(.82, .07, .44);
+      const roadSegmentZ = new THREE.BoxGeometry(.44, .07, .82);
+      const ROAD_STEP = .62;
+      const roadPaths = [
+        { alongX: true, length: 17, cross: -2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
+        { alongX: true, length: 17, cross: 2.85, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
+        { alongX: false, length: 17.6, cross: -2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 },
+        { alongX: false, length: 17.6, cross: 2.7, phase: Math.random() * 6.3, amp: .5 + Math.random() * .3, freq: .42 + Math.random() * .18 }
+      ];
+      const roadLateral = (road, along) => road.cross + Math.sin(along * road.freq + road.phase) * road.amp;
+      roadPaths.forEach(road => {
+        const count = Math.ceil(road.length / ROAD_STEP);
         for (let i = 0; i < count; i += 1) {
           const along = -road.length / 2 + (i + .5) * road.length / count;
+          const lateral = roadLateral(road, along);
+          const yaw = Math.atan2(roadLateral(road, along + ROAD_STEP) - lateral, ROAD_STEP);
           const mesh = new THREE.Mesh(road.alongX ? roadSegmentX : roadSegmentZ, roadMaterial);
           mesh.receiveShadow = true;
-          placeOnPlanet(mesh, road.alongX ? along : road.cross, road.alongX ? road.cross : along, .02);
+          placeOnPlanet(mesh, road.alongX ? along : lateral, road.alongX ? lateral : along, .02);
+          mesh.rotateY(road.alongX ? -yaw : yaw);
         }
       });
 
@@ -503,26 +520,40 @@
         new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: .85 }),
         new THREE.MeshStandardMaterial({ color: 0x27793a, roughness: .85 })
       ];
-      // 街の外周〜惑星の裏側まで森を散らして「外に広がっている」感を出す
-      for (let i = 0; i < 130; i += 1) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = i < 46 ? 9.3 + Math.random() * 2.4 : 12 + Math.random() * (Math.PI * PLANET_RADIUS - 12.5);
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
+      // 森: 街の外周〜惑星の裏側までと、街なかの隙間にも木を散らして雑多さを出す
+      const nearRoad = (x, z) => roadPaths.some(road => {
+        const along = road.alongX ? x : z;
+        if (Math.abs(along) > road.length / 2 + .4) return false;
+        return Math.abs((road.alongX ? z : x) - roadLateral(road, along)) < .68;
+      });
+      const inDistrict = (x, z) => districts.some(district =>
+        Math.abs(x - district.center[0]) < district.size[0] / 2 + .2 &&
+        Math.abs(z - district.center[1]) < district.size[1] / 2 + .2
+      );
+      function plantTree(x, z, variant) {
         const tree = new THREE.Group();
-        const scale = .75 + Math.random() * .55;
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .3, 6), trunkMaterial);
         trunk.position.y = .15;
         tree.add(trunk);
-        const leaf = new THREE.Mesh(
-          new THREE.ConeGeometry(.3, .72, 7),
-          leafMaterials[i % leafMaterials.length]
-        );
+        const leaf = new THREE.Mesh(new THREE.ConeGeometry(.3, .72, 7), leafMaterials[variant % leafMaterials.length]);
         leaf.position.y = .62;
         leaf.castShadow = true;
         tree.add(leaf);
-        tree.scale.setScalar(scale);
+        tree.scale.setScalar(.75 + Math.random() * .55);
         placeOnPlanet(tree, x, z, 0);
+      }
+      for (let i = 0; i < 130; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = i < 46 ? 9.3 + Math.random() * 2.4 : 12 + Math.random() * (Math.PI * PLANET_RADIUS - 12.5);
+        plantTree(Math.cos(angle) * radius, Math.sin(angle) * radius, i);
+      }
+      // 街なかの空き地にもまばらに
+      for (let i = 0, planted = 0; i < 220 && planted < 26; i += 1) {
+        const x = (Math.random() - .5) * 17.4;
+        const z = (Math.random() - .5) * 17.4;
+        if (inDistrict(x, z) || nearRoad(x, z)) continue;
+        plantTree(x, z, i);
+        planted += 1;
       }
 
       // 昼空: 星の代わりにぽっかり浮かぶ雲
@@ -631,7 +662,7 @@
         const detailed = sub.contracted;
         const group = new THREE.Group();
         placeOnPlanet(group, sub.position[0], sub.position[1], -.01);
-        group.rotateY(sub.position[0] * -.009);
+        group.rotateY((Math.random() - .5) * .6);
         group.userData = { sub, index, destroyed: false, decision: null, baseQuaternion: group.quaternion.clone(), baseY: .18, height, duplicateBadge: null, keepDecoration: null, buildBorn: null };
         group.scale.setScalar(.01);
 
