@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#171342">
+  <title>ZenCut</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+      --ink: #fff8df;
+      --gold: #ffd34d;
+      --glass: rgba(20, 14, 62, .78);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #171342; }
+    body { color: var(--ink); touch-action: none; -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    #stage, #stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #stage { background: linear-gradient(#171342 0%, #6c327d 44%, #f08b69 72%, #172a51 100%); }
+
+    #title-screen {
+      position: fixed; z-index: 20; inset: 0; display: grid; place-items: end center;
+      padding: max(24px, env(safe-area-inset-top)) 24px max(44px, env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(17, 11, 56, .05), rgba(17, 11, 56, .15) 45%, rgba(12, 9, 42, .9)),
+                  url('./assets/title.png') center 44% / cover no-repeat;
+      transition: opacity .55s ease, visibility .55s;
+    }
+    #title-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .title-card { width: min(100%, 430px); text-align: center; filter: drop-shadow(0 5px 10px #171342); }
+    .logo { margin: 0; font-size: clamp(3.8rem, 16vw, 6.2rem); font-weight: 1000; letter-spacing: -.08em; line-height: .92; }
+    .logo span { color: var(--gold); }
+    .tagline { margin: 12px 0 22px; font-weight: 800; letter-spacing: .12em; text-shadow: 0 2px 8px #171342; }
+    #start {
+      width: min(88%, 330px); min-height: 64px; border: 2px solid #fff0ac; border-radius: 999px;
+      color: #3b2450; background: linear-gradient(#fff4a6, #ffbe36); font-size: 1.25rem; font-weight: 1000;
+      box-shadow: 0 8px 0 #b15b2d, 0 14px 30px rgba(0,0,0,.35); cursor: pointer;
+    }
+    #start:active { transform: translateY(5px); box-shadow: 0 3px 0 #b15b2d; }
+
+    #hud {
+      position: fixed; z-index: 5; top: 0; left: 0; right: 0; pointer-events: none;
+      padding: max(10px, env(safe-area-inset-top)) 12px 0;
+      display: flex; justify-content: center;
+    }
+    .counter {
+      min-width: min(94vw, 390px); padding: 10px 18px 9px; border: 1px solid rgba(255,255,255,.23); border-radius: 20px;
+      text-align: center; background: linear-gradient(135deg, rgba(41,25,89,.91), rgba(24,17,64,.76));
+      box-shadow: 0 7px 25px rgba(5,4,30,.34), inset 0 1px rgba(255,255,255,.18); backdrop-filter: blur(10px);
+    }
+    .counter-main { font-size: clamp(.93rem, 4vw, 1.14rem); font-weight: 800; }
+    #monthly { display: inline-block; color: var(--gold); font-size: 1.35em; font-weight: 1000; font-variant-numeric: tabular-nums; }
+    #monthly.bump { animation: bump .55s ease; }
+    .counter-sub { margin-top: 1px; color: #e5dffc; font-size: .76rem; letter-spacing: .08em; }
+
+    #hint {
+      position: fixed; z-index: 5; top: max(84px, calc(env(safe-area-inset-top) + 76px)); left: 50%; transform: translateX(-50%);
+      width: max-content; max-width: 90vw; padding: 7px 13px; border-radius: 999px; background: rgba(17,12,54,.6);
+      color: #f5eaff; font-size: .72rem; text-align: center; pointer-events: none; transition: opacity .3s;
+    }
+    #motion-status { color: #ffd76a; }
+
+    #sheet {
+      position: fixed; z-index: 8; left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom));
+      margin: auto; width: min(calc(100% - 20px), 520px); padding: 15px 18px 14px; border: 1px solid rgba(255,255,255,.25);
+      border-radius: 24px; background: var(--glass); box-shadow: 0 12px 40px rgba(4,3,27,.48); backdrop-filter: blur(14px);
+      text-align: center; transform: translateY(calc(100% + 28px)); opacity: 0; transition: .28s cubic-bezier(.2,.9,.2,1.1); pointer-events: none;
+    }
+    #sheet.visible { transform: translateY(0); opacity: 1; }
+    #sheet-title { margin: 0; color: #fff; font-size: 1.25rem; font-weight: 1000; }
+    #sheet-detail { margin: 4px 0 10px; color: #ddd5f5; font-size: .91rem; }
+    #sheet-action { margin: 0; color: var(--gold); font-size: 1.05rem; font-weight: 1000; animation: pulse 1s ease-in-out infinite; }
+
+    #flash { position: fixed; z-index: 7; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle, #fffde0, #ffbf24 28%, #ff4d00 58%, transparent 73%); mix-blend-mode: screen; }
+    #flash.go { animation: flash .44s ease-out; }
+
+    #celebration {
+      position: fixed; z-index: 15; inset: 0; display: grid; place-items: center; padding: 24px;
+      background: radial-gradient(circle at 50% 56%, rgba(255,205,55,.28), rgba(15,10,55,.78) 52%, rgba(9,7,35,.94));
+      opacity: 0; visibility: hidden; transition: opacity .7s, visibility .7s; pointer-events: none;
+    }
+    #celebration.visible { opacity: 1; visibility: visible; }
+    .celebrate-card { text-align: center; }
+    #celebration.visible .celebrate-card { animation: rise .8s cubic-bezier(.2,.9,.2,1.2); }
+    .celebrate-icon { font-size: clamp(5rem, 25vw, 9rem); filter: drop-shadow(0 0 25px #ffc928); }
+    .celebrate-card h2 { margin: 8px 0; font-size: clamp(1.75rem, 7vw, 3rem); line-height: 1.2; }
+    .celebrate-card strong { display: block; color: var(--gold); font-size: 1.25em; }
+    .celebrate-card p { margin: 14px 0 0; color: #eee8ff; font-weight: 700; }
+
+    @keyframes bump { 35% { transform: scale(1.38) rotate(-2deg); color: #fff; } }
+    @keyframes pulse { 50% { transform: scale(1.04); filter: brightness(1.3); } }
+    @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes rise { from { transform: translateY(50px) scale(.7); opacity: 0; } }
+    @media (min-width: 720px) { #hint { font-size: .8rem; } }
+  </style>
+</head>
+<body>
+  <div id="stage" aria-label="サブスクリプションのビル街"></div>
+
+  <header id="hud">
+    <div class="counter">
+      <div class="counter-main">月あたり <span id="monthly">¥0</span> 節約中</div>
+      <div class="counter-sub">年間 <span id="annual">¥0</span></div>
+    </div>
+  </header>
+  <div id="hint">ビルをタップして選択 <span id="motion-status">・PCはダブルクリックで爆破</span></div>
+
+  <aside id="sheet" aria-live="polite">
+    <h2 id="sheet-title"></h2>
+    <p id="sheet-detail"></p>
+    <p id="sheet-action">📱 振りかぶって叩きつけろ！</p>
+  </aside>
+  <div id="flash"></div>
+
+  <section id="celebration" aria-live="assertive">
+    <div class="celebrate-card">
+      <div class="celebrate-icon">🌱</div>
+      <h2>すべて解放！<strong>月々 ¥12,940 の節約に成功！</strong></h2>
+      <p>年間 ¥155,280 が、あなたの未来に育ちます。</p>
+    </div>
+  </section>
+
+  <section id="title-screen">
+    <div class="title-card">
+      <h1 class="logo">Zen<span>Cut</span></h1>
+      <p class="tagline">サブスクを壊して、未来を育てよう。</p>
+      <button id="start" type="button">はじめる</button>
+    </div>
+  </section>
+
+  <script src="./three.min.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const subscriptions = [
+        { name: 'MOOVA', icon: '🎬', category: '動画', price: 2400, months: 36, color: 0xf05252, dark: 0x8b294d },
+        { name: 'BEATLY', icon: '🎵', category: '音楽', price: 980, months: 24, color: 0x3299db, dark: 0x294b9b },
+        { name: 'GYMO', icon: '🏋️', category: 'ジム', price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70 },
+        { name: 'LINGOZA', icon: '📖', category: '英会話', price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42 },
+        { name: 'GEMPOP', icon: '💎', category: 'ゲーム課金', price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f }
+      ];
+      const positions = [[-3.7, 1.1], [-1.85, -.9], [0, 1.35], [1.85, -.9], [3.7, 1.1]];
+      const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2'];
+      const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audioContext = AudioContextClass ? new AudioContextClass() : null;
+      const audioBuffers = {};
+      const audioBufferLoads = audioNames.map(async name => {
+        if (!audioContext) return;
+        try {
+          const response = await fetch(`./assets/se/${name}.mp3`);
+          if (!response.ok) throw new Error(`SE fetch failed: ${response.status}`);
+          audioBuffers[name] = await audioContext.decodeAudioData(await response.arrayBuffer());
+        } catch (error) {
+          console.warn(`${name}はHTMLAudioへフォールバックします`, error);
+        }
+      });
+      const audioBuffersReady = Promise.allSettled(audioBufferLoads);
+      const stage = document.querySelector('#stage');
+      const sheet = document.querySelector('#sheet');
+      const sheetTitle = document.querySelector('#sheet-title');
+      const sheetDetail = document.querySelector('#sheet-detail');
+      const monthlyOutput = document.querySelector('#monthly');
+      const annualOutput = document.querySelector('#annual');
+      const flash = document.querySelector('#flash');
+      const motionStatus = document.querySelector('#motion-status');
+      const celebration = document.querySelector('#celebration');
+      const startButton = document.querySelector('#start');
+      const titleScreen = document.querySelector('#title-screen');
+      const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x4c286d, 17, 35);
+      const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, .1, 100);
+      camera.position.set(0, 10.3, innerWidth / innerHeight < .7 ? 28 : 20);
+      camera.lookAt(0, 3.5, 0);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      stage.appendChild(renderer.domElement);
+
+      scene.add(new THREE.HemisphereLight(0xffb9b0, 0x172a49, 2.45));
+      const sun = new THREE.DirectionalLight(0xffd9a0, 3.2);
+      sun.position.set(-7, 14, 9);
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      scene.add(sun);
+      const purpleLight = new THREE.PointLight(0x7c4dff, 32, 24);
+      purpleLight.position.set(7, 7, 4);
+      scene.add(purpleLight);
+
+      const ground = new THREE.Mesh(
+        new THREE.CylinderGeometry(10.5, 11.3, .75, 8),
+        new THREE.MeshStandardMaterial({ color: 0x24365b, roughness: .72, metalness: .12 })
+      );
+      ground.position.y = -.42;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      const plaza = new THREE.Mesh(
+        new THREE.CylinderGeometry(8.8, 9.2, .12, 8),
+        new THREE.MeshStandardMaterial({ color: 0x55416f, roughness: .83 })
+      );
+      plaza.position.y = .02;
+      plaza.receiveShadow = true;
+      scene.add(plaza);
+
+      const starGeometry = new THREE.BufferGeometry();
+      const starPositions = [];
+      for (let i = 0; i < 85; i += 1) starPositions.push((Math.random() - .5) * 35, 8 + Math.random() * 16, -7 - Math.random() * 10);
+      starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+      scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xfff5cf, size: .075, transparent: true, opacity: .85 })));
+
+      const buildings = [];
+      const clickableMeshes = [];
+      const particles = [];
+      const sprouts = [];
+      const treePartyCoins = [];
+      const savingsTree = new THREE.Group();
+      const treeGold = new THREE.MeshStandardMaterial({ color: 0xffc52f, emissive: 0xff8b0b, emissiveIntensity: 1.15, metalness: .42, roughness: .3 });
+      const treeLightGold = new THREE.MeshStandardMaterial({ color: 0xffed72, emissive: 0xffb51f, emissiveIntensity: 1.7, metalness: .25, roughness: .26 });
+      let treeStage = 0;
+      let treeGrowthStarted = performance.now();
+      let selected = null;
+      let savedMonthly = 0;
+      let destroyedCount = 0;
+      let cameraShake = 0;
+      let lastHitAt = -Infinity;
+      let listening = false;
+      let started = false;
+
+      function roundedBox(width, height, depth, color, y, bevel = .08) {
+        const geometry = new THREE.BoxGeometry(width, height, depth, 2, 2, 2);
+        const position = geometry.attributes.position;
+        for (let i = 0; i < position.count; i += 1) {
+          const x = position.getX(i), z = position.getZ(i);
+          const scale = 1 - bevel * Math.max(0, Math.abs(position.getY(i)) / (height / 2));
+          position.setXYZ(i, x * scale, position.getY(i), z * scale);
+        }
+        geometry.computeVertexNormals();
+        const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color, roughness: .58, metalness: .12 }));
+        mesh.position.y = y;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        return mesh;
+      }
+
+      function createSign(sub) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 512, 256);
+        gradient.addColorStop(0, '#291d65'); gradient.addColorStop(1, '#6941aa');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 256);
+        ctx.strokeStyle = '#ffd65c'; ctx.lineWidth = 13; ctx.strokeRect(8, 8, 496, 240);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '86px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(sub.icon, 92, 114);
+        ctx.font = '900 55px sans-serif'; ctx.fillText(sub.name, 320, 87);
+        ctx.font = '700 38px sans-serif'; ctx.fillStyle = '#ffe47d'; ctx.fillText(`${formatYen(sub.price)}/mo`, 320, 164);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.25, 1.12), new THREE.MeshBasicMaterial({ map: texture, transparent: true }));
+        sign.position.z = .94;
+        return sign;
+      }
+
+      function addWindows(group, width, height, baseY, sub) {
+        const rows = Math.max(2, Math.floor(height / .85));
+        const cols = width > 2 ? 3 : 2;
+        const material = new THREE.MeshStandardMaterial({ color: 0xffe16a, emissive: 0xff9d23, emissiveIntensity: 2.1 });
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            if ((row + col + sub.months) % 5 === 0) continue;
+            const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(.32, .28, .055), material);
+            windowMesh.position.set((col - (cols - 1) / 2) * .57, baseY - height / 2 + .6 + row * .71, 1.015);
+            group.add(windowMesh);
+          }
+        }
+      }
+
+      function createBuilding(sub, index) {
+        const paid = sub.price * sub.months;
+        const height = 3.2 + Math.sqrt(paid / 140400) * 5.3;
+        const group = new THREE.Group();
+        group.position.set(positions[index][0], 0, positions[index][1]);
+        group.rotation.y = positions[index][0] * -.012;
+        group.userData = { sub, index, destroyed: false, baseX: group.position.x, baseY: 0, height };
+
+        const bodyHeight = height - 1.35;
+        const base = roundedBox(2.15, bodyHeight, 1.9, sub.color, bodyHeight / 2 + .1);
+        base.userData.building = group;
+        group.add(base); clickableMeshes.push(base);
+        addWindows(group, 2.15, bodyHeight, bodyHeight / 2 + .1, sub);
+
+        const upper = roundedBox(1.92, 1.34, 1.72, sub.dark, height - .58);
+        upper.userData.building = group;
+        group.add(upper); clickableMeshes.push(upper);
+        const roof = roundedBox(1.55, .35, 1.38, 0x413267, height + .25, .04);
+        group.add(roof);
+        const cap = roundedBox(.82, .35, .72, sub.color, height + .58, .03);
+        group.add(cap);
+        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.045, .065, .7, 8), new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.5 }));
+        antenna.position.y = height + 1.1; group.add(antenna);
+        const sign = createSign(sub); sign.position.y = height - .57; sign.userData.building = group; group.add(sign); clickableMeshes.push(sign);
+
+        const halo = new THREE.Mesh(new THREE.RingGeometry(1.65, 1.85, 32), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+        halo.rotation.x = -Math.PI / 2; halo.position.y = .14; group.add(halo); group.userData.halo = halo;
+        scene.add(group); buildings.push(group);
+      }
+      subscriptions.forEach(createBuilding);
+
+      function addTreePart(geometry, material, position, scale, rotation) {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(...position);
+        if (scale) mesh.scale.set(...scale);
+        if (rotation) mesh.rotation.set(...rotation);
+        mesh.castShadow = true;
+        savingsTree.add(mesh);
+        return mesh;
+      }
+
+      function rebuildSavingsTree(stage) {
+        savingsTree.clear();
+        const trunkHeight = .38 + stage * .43;
+        addTreePart(new THREE.ConeGeometry(.5 + stage * .08, .2, 10), treeGold, [0, .1, 0]);
+        addTreePart(new THREE.CylinderGeometry(.07 + stage * .035, .11 + stage * .055, trunkHeight, 9), treeGold, [0, .2 + trunkHeight / 2, 0]);
+
+        if (stage === 0) {
+          addTreePart(new THREE.SphereGeometry(.18, 10, 7), treeLightGold, [0, trunkHeight + .28, 0], [1, 1.25, 1]);
+        } else {
+          const leafCount = Math.min(6, stage + 1);
+          for (let i = 0; i < leafCount; i += 1) {
+            const side = i % 2 === 0 ? -1 : 1;
+            const level = Math.floor(i / 2);
+            const leafY = trunkHeight * (.58 + level * .16) + .22;
+            addTreePart(
+              new THREE.SphereGeometry(.3 + stage * .045, 10, 7),
+              treeLightGold,
+              [side * (.24 + level * .1), leafY, (i % 3 - 1) * .09],
+              [1.15, .34, .64],
+              [0, side * .22, side * -.48]
+            );
+          }
+        }
+
+        if (stage >= 2) {
+          const branchCount = Math.min(5, stage + 1);
+          for (let i = 0; i < branchCount; i += 1) {
+            const angle = i / branchCount * Math.PI * 2;
+            const branch = addTreePart(
+              new THREE.CylinderGeometry(.035 + stage * .008, .055 + stage * .01, .65 + stage * .12, 7),
+              treeGold,
+              [Math.cos(angle) * .22, trunkHeight * .74, Math.sin(angle) * .22],
+              null,
+              [Math.sin(angle) * .82, 0, -Math.cos(angle) * .82]
+            );
+            branch.rotation.y = angle;
+          }
+        }
+
+        if (stage >= 3) {
+          const canopyCount = stage === 5 ? 7 : stage + 1;
+          const radius = .5 + stage * .15;
+          for (let i = 0; i < canopyCount; i += 1) {
+            const angle = i / canopyCount * Math.PI * 2;
+            const ring = i === canopyCount - 1 ? 0 : radius * .58;
+            addTreePart(
+              new THREE.SphereGeometry(radius, 10, 7),
+              i % 2 ? treeGold : treeLightGold,
+              [Math.cos(angle) * ring, trunkHeight + .42 + Math.sin(i * 1.7) * .2, Math.sin(angle) * ring],
+              [1, .84, 1]
+            );
+          }
+        }
+
+        const glow = new THREE.PointLight(0xffc329, 14 + stage * 5, 5 + stage * 1.2);
+        glow.position.y = trunkHeight + .55;
+        savingsTree.add(glow);
+        savingsTree.userData.stage = stage;
+        savingsTree.userData.stageName = ['小さな芽', '芽', '双葉', '若木', '木', '大樹'][stage];
+        savingsTree.scale.setScalar(.08);
+        treeGrowthStarted = performance.now();
+      }
+
+      function growSavingsTree() {
+        treeStage = Math.min(5, treeStage + 1);
+        rebuildSavingsTree(treeStage);
+        playSound('extend1', .82);
+        setTimeout(() => playSound('kira2', .78), 230);
+      }
+
+      function createTreeCoinParty() {
+        const geometry = new THREE.CylinderGeometry(.18, .18, .06, 14);
+        const material = new THREE.MeshStandardMaterial({ color: 0xffcf32, emissive: 0xff920b, emissiveIntensity: .8, metalness: .82, roughness: .2 });
+        for (let i = 0; i < 34; i += 1) {
+          const coin = new THREE.Mesh(geometry, material);
+          coin.rotation.z = Math.PI / 2;
+          scene.add(coin);
+          treePartyCoins.push({ mesh: coin, angle: i / 34 * Math.PI * 2, radius: 1.25 + Math.random() * 2.25, phase: Math.random(), speed: .45 + Math.random() * .75, rise: .15 + Math.random() * .18 });
+        }
+      }
+
+      savingsTree.position.set(0, .12, 4.15);
+      scene.add(savingsTree);
+      rebuildSavingsTree(0);
+
+      function selectBuilding(building) {
+        if (!building || building.userData.destroyed) return;
+        playSound('hyun1', .72);
+        if (selected) selected.userData.halo.material.opacity = 0;
+        selected = building;
+        selected.userData.halo.material.opacity = .95;
+        const sub = building.userData.sub;
+        sheetTitle.textContent = `${sub.icon} ${sub.name}  ${formatYen(sub.price)}/月`;
+        sheetDetail.textContent = `${sub.category}・${sub.months / 12}年契約中・累計${formatYen(sub.price * sub.months)}`;
+        sheet.classList.add('visible');
+      }
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      function pick(event) {
+        pointer.x = event.clientX / innerWidth * 2 - 1;
+        pointer.y = -(event.clientY / innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(clickableMeshes, false).find(item => !item.object.userData.building.userData.destroyed);
+        if (hit) selectBuilding(hit.object.userData.building);
+      }
+      renderer.domElement.addEventListener('pointerup', pick);
+      renderer.domElement.addEventListener('dblclick', event => {
+        pick(event);
+        if (selected) triggerHit();
+      });
+
+      function playSound(name, volume = 1) {
+        const buffer = audioBuffers[name];
+        if (audioContext && buffer) {
+          const source = audioContext.createBufferSource(); // AudioBufferSourceNode（再生ごとに生成して重複可）
+          const gain = audioContext.createGain(); // GainNode
+          source.buffer = buffer;
+          gain.gain.value = volume;
+          source.connect(gain).connect(audioContext.destination);
+          source.start();
+          return;
+        }
+        const fallback = sounds[name].cloneNode();
+        fallback.volume = volume;
+        fallback.play().catch(() => {});
+      }
+
+      function createExplosion(building) {
+        const sub = building.userData.sub;
+        const origin = new THREE.Vector3();
+        building.getWorldPosition(origin);
+        origin.y += building.userData.height * .48;
+        const debrisMaterial = new THREE.MeshStandardMaterial({ color: sub.color, roughness: .55, emissive: sub.dark, emissiveIntensity: .18 });
+        for (let i = 0; i < 50; i += 1) {
+          const size = .16 + Math.random() * .32;
+          const piece = new THREE.Mesh(new THREE.BoxGeometry(size, size * (.7 + Math.random()), size), debrisMaterial);
+          piece.position.copy(origin).add(new THREE.Vector3((Math.random() - .5) * 1.7, (Math.random() - .5) * building.userData.height, (Math.random() - .5) * 1.3));
+          piece.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+          scene.add(piece);
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 3 + Math.random() * 6;
+          particles.push({ mesh: piece, velocity: new THREE.Vector3(Math.cos(angle) * speed, 4.5 + Math.random() * 7, Math.sin(angle) * speed), spin: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9), life: 1.1 + Math.random() * .35, coin: false });
+        }
+        const coinMaterial = new THREE.MeshStandardMaterial({ color: 0xffc229, emissive: 0xff8a00, emissiveIntensity: .65, metalness: .75, roughness: .24 });
+        for (let i = 0; i < 16; i += 1) {
+          const coin = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, .075, 16), coinMaterial);
+          coin.rotation.z = Math.PI / 2;
+          coin.position.copy(origin).add(new THREE.Vector3((Math.random() - .5) * 1.2, Math.random() * 2, (Math.random() - .5)));
+          scene.add(coin);
+          const angle = Math.random() * Math.PI * 2;
+          particles.push({ mesh: coin, velocity: new THREE.Vector3(Math.cos(angle) * (4 + Math.random() * 5), 6 + Math.random() * 7, Math.sin(angle) * (4 + Math.random() * 5)), spin: new THREE.Vector3(5 + Math.random() * 8, 8 + Math.random() * 10, 4), life: 1.3, coin: true });
+        }
+        const burst = new THREE.PointLight(0xff9b21, 70, 13);
+        burst.position.copy(origin); scene.add(burst);
+        particles.push({ light: burst, life: .42 });
+      }
+
+      function createSprout(building) {
+        playSound('nyu1', .82);
+        const group = new THREE.Group();
+        group.position.set(building.position.x, .12, building.position.z);
+        group.scale.setScalar(.01);
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffd633, emissive: 0xffa514, emissiveIntensity: 1.35, metalness: .28, roughness: .3 });
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(.08, .12, 1.25, 8), gold); stem.position.y = .68; group.add(stem);
+        const leafGeometry = new THREE.SphereGeometry(.48, 12, 8);
+        const left = new THREE.Mesh(leafGeometry, gold); left.scale.set(1, .34, .58); left.rotation.z = .5; left.position.set(-.37, 1.18, 0); group.add(left);
+        const right = left.clone(); right.rotation.z = -.5; right.position.x = .37; group.add(right);
+        const glow = new THREE.PointLight(0xffbd31, 18, 5); glow.position.y = 1.1; group.add(glow);
+        scene.add(group); sprouts.push({ group, born: performance.now(), target: 1 });
+      }
+
+      function animateSavings(amount) {
+        const from = savedMonthly;
+        const to = savedMonthly + amount;
+        savedMonthly = to;
+        const startAt = performance.now();
+        function step(now) {
+          const t = Math.min(1, (now - startAt) / 720);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const current = from + (to - from) * eased;
+          monthlyOutput.textContent = formatYen(current);
+          annualOutput.textContent = formatYen(current * 12);
+          if (t < 1) requestAnimationFrame(step);
+        }
+        monthlyOutput.classList.remove('bump'); void monthlyOutput.offsetWidth; monthlyOutput.classList.add('bump');
+        requestAnimationFrame(step);
+      }
+
+      function demolish(building) {
+        if (!building || building.userData.destroyed) return;
+        building.userData.destroyed = true;
+        createExplosion(building);
+        cameraShake = 1;
+        playSound('big-explosion1');
+        setTimeout(() => playSound('building-collapse-little1', .48), 300);
+        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+        building.visible = false;
+        sheet.classList.remove('visible');
+        createSprout(building);
+        growSavingsTree();
+        animateSavings(building.userData.sub.price);
+        destroyedCount += 1;
+        selected = null;
+        setTimeout(() => playSound('money-drop1', .9), 270);
+        setTimeout(() => playSound('amount-display1', .78), 680);
+        if (destroyedCount === subscriptions.length) {
+          setTimeout(() => {
+            sprouts.forEach((sprout, index) => { sprout.target = 1.55 + index * .07; });
+            createTreeCoinParty();
+            playSound('jajean1');
+            celebration.classList.add('visible');
+            setTimeout(() => playSound('shine2', .9), 420);
+          }, 1250);
+        }
+      }
+
+      function triggerHit() {
+        const now = performance.now();
+        if (now - lastHitAt < 500) return;
+        lastHitAt = now;
+        if (selected && !selected.userData.destroyed) demolish(selected);
+      }
+
+      function handleMotion(event) {
+        let acceleration = event.acceleration;
+        let fallback = false;
+        if (!acceleration || acceleration.x == null || acceleration.y == null || acceleration.z == null) {
+          acceleration = event.accelerationIncludingGravity;
+          fallback = true;
+        }
+        if (!acceleration || acceleration.x == null || acceleration.y == null || acceleration.z == null) return;
+        const magnitude = Math.hypot(acceleration.x, acceleration.y, acceleration.z);
+        if (fallback) motionStatus.textContent = '・重力込みモーション計測中';
+        if (magnitude > 25) triggerHit();
+      }
+
+      async function startExperience() {
+        if (started) return;
+        started = true;
+        startButton.disabled = true;
+        startButton.textContent = '準備中…';
+        const resumePromise = audioContext ? audioContext.resume() : Promise.resolve();
+        let permission = '不要';
+        try {
+          if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            permission = await DeviceMotionEvent.requestPermission();
+          }
+          await Promise.allSettled([resumePromise, audioBuffersReady]);
+          if (permission !== 'denied' && typeof DeviceMotionEvent !== 'undefined') {
+            if (!listening) window.addEventListener('devicemotion', handleMotion);
+            listening = true;
+            motionStatus.textContent = '・スマホを叩きつけて爆破';
+          } else {
+            motionStatus.textContent = '・PCはダブルクリックで爆破';
+          }
+        } catch (error) {
+          await Promise.allSettled([resumePromise, audioBuffersReady]);
+          motionStatus.textContent = '・ダブルクリックでも爆破できます';
+        }
+        titleScreen.classList.add('hidden');
+        setTimeout(() => selectBuilding(buildings[0]), 850);
+      }
+      startButton.addEventListener('click', startExperience);
+
+      const clock = new THREE.Clock();
+      function render(now) {
+        requestAnimationFrame(render);
+        const dt = Math.min(clock.getDelta(), .035);
+        const time = now * .001;
+        buildings.forEach(building => {
+          if (building === selected && !building.userData.destroyed) {
+            building.position.x = building.userData.baseX + Math.sin(time * 22) * .055;
+            building.rotation.z = Math.sin(time * 18) * .018;
+            building.userData.halo.material.opacity = .62 + Math.sin(time * 5) * .25;
+          } else {
+            building.position.x = building.userData.baseX;
+            building.rotation.z = 0;
+          }
+        });
+        for (let i = particles.length - 1; i >= 0; i -= 1) {
+          const particle = particles[i];
+          particle.life -= dt;
+          if (particle.light) particle.light.intensity *= .82;
+          if (particle.mesh) {
+            particle.velocity.y -= 13 * dt;
+            particle.mesh.position.addScaledVector(particle.velocity, dt);
+            particle.mesh.rotation.x += particle.spin.x * dt;
+            particle.mesh.rotation.y += particle.spin.y * dt;
+            particle.mesh.rotation.z += particle.spin.z * dt;
+            if (particle.life < .35) particle.mesh.scale.multiplyScalar(.9);
+          }
+          if (particle.life <= 0) {
+            if (particle.mesh) scene.remove(particle.mesh);
+            if (particle.light) scene.remove(particle.light);
+            particles.splice(i, 1);
+          }
+        }
+        sprouts.forEach(sprout => {
+          const age = Math.min(1, (performance.now() - sprout.born) / 520);
+          const bounce = 1 + Math.sin(age * Math.PI * 3) * (1 - age) * .18;
+          const scale = Math.max(.01, age * sprout.target * bounce);
+          sprout.group.scale.setScalar(scale);
+          sprout.group.rotation.y = Math.sin(time * 1.5) * .12;
+        });
+        const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
+        const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
+        savingsTree.scale.setScalar(Math.max(.08, treeAge * treeBounce));
+        savingsTree.rotation.y = Math.sin(time * 1.15) * .045;
+        treePartyCoins.forEach(coin => {
+          coin.angle += dt * coin.speed;
+          const lift = (time * coin.rise + coin.phase) % 1;
+          coin.mesh.position.set(
+            savingsTree.position.x + Math.cos(coin.angle) * coin.radius,
+            .7 + lift * 4.6,
+            savingsTree.position.z + Math.sin(coin.angle) * coin.radius
+          );
+          coin.mesh.rotation.x += dt * 7;
+          coin.mesh.rotation.y += dt * 10;
+        });
+        if (cameraShake > .01) {
+          camera.position.x = (Math.random() - .5) * cameraShake;
+          camera.position.y = 10.3 + (Math.random() - .5) * cameraShake;
+          cameraShake *= .82;
+        } else {
+          camera.position.x += (0 - camera.position.x) * .1;
+          camera.position.y += (10.3 - camera.position.y) * .1;
+        }
+        camera.lookAt(0, 3.5, 0);
+        // 0幅で初期化された場合(非表示タブ読込等)の自己修復
+        if (renderer.domElement.width === 0 && innerWidth > 0) dispatchEvent(new Event('resize'));
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(render);
+
+      addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.position.z = camera.aspect < .7 ? 28 : 20;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setSize(innerWidth, innerHeight);
+      });
+    })();
+  </script>
+</body>
+</html>

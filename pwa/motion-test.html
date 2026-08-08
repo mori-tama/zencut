@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>叩きつけ検出テスト</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111827;
+      color: #f9fafb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+      display: grid;
+      place-items: center;
+      background: #111827;
+      transition: background-color 80ms ease;
+    }
+    body.flash { background: #f59e0b; }
+    main { width: min(100%, 520px); display: grid; gap: 16px; }
+    h1 { margin: 0; text-align: center; font-size: 1.5rem; }
+    .panel {
+      padding: 18px;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      background: #1f2937;
+      text-align: center;
+    }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .label { color: #d1d5db; font-size: 0.9rem; }
+    .value { display: block; margin-top: 4px; font-size: clamp(2.2rem, 12vw, 4rem); font-weight: 800; line-height: 1; }
+    .unit { margin-top: 6px; color: #9ca3af; }
+    #count { color: #fbbf24; }
+    button {
+      width: 100%;
+      min-height: 64px;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      background: #2563eb;
+      color: white;
+      font: inherit;
+      font-size: 1.25rem;
+      font-weight: 700;
+      touch-action: manipulation;
+    }
+    button:disabled { background: #4b5563; color: #d1d5db; }
+    #manual { background: #b45309; }
+    #status { min-height: 1.5em; margin: 0; color: #d1d5db; text-align: center; }
+    input[type="range"] { width: 100%; margin-top: 16px; accent-color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>叩きつけ検出テスト</h1>
+    <button id="start" type="button">タップしてスタート</button>
+    <p id="status" aria-live="polite">モーション許可と音声再生を準備します</p>
+
+    <section class="metrics" aria-label="計測値">
+      <div class="panel">
+        <span class="label">加速度</span>
+        <output id="magnitude" class="value">0.0</output>
+        <div class="unit">m/s²</div>
+      </div>
+      <div class="panel">
+        <span class="label">直近ピーク</span>
+        <output id="peak" class="value">0.0</output>
+        <div class="unit">m/s²</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <span class="label">ヒット回数</span>
+      <output id="count" class="value">0</output>
+    </section>
+
+    <section class="panel">
+      <label for="threshold">検出閾値: <output id="thresholdValue">25</output> m/s²</label>
+      <input id="threshold" type="range" min="5" max="40" value="25" step="1">
+    </section>
+
+    <button id="manual" type="button">手動でカウント</button>
+  </main>
+
+  <script>
+    const startButton = document.querySelector('#start');
+    const manualButton = document.querySelector('#manual');
+    const statusText = document.querySelector('#status');
+    const magnitudeOutput = document.querySelector('#magnitude');
+    const peakOutput = document.querySelector('#peak');
+    const countOutput = document.querySelector('#count');
+    const thresholdInput = document.querySelector('#threshold');
+    const thresholdOutput = document.querySelector('#thresholdValue');
+    const hitAudio = new Audio('./se/money1.mp3');
+
+    let hitCount = 0;
+    let peak = 0;
+    let lastHitAt = -Infinity;
+    let flashTimer;
+    let listening = false;
+
+    thresholdInput.addEventListener('input', () => {
+      thresholdOutput.value = thresholdInput.value;
+    });
+
+    function triggerHit() {
+      const now = performance.now();
+      if (now - lastHitAt < 500) return;
+      lastHitAt = now;
+      hitCount += 1;
+      countOutput.value = String(hitCount);
+
+      document.body.classList.add('flash');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => document.body.classList.remove('flash'), 140);
+
+      hitAudio.currentTime = 0;
+      hitAudio.play().catch(() => {
+        statusText.textContent = 'ヒットを検出しましたが、音声を再生できませんでした';
+      });
+    }
+
+    function handleMotion(event) {
+      let acceleration = event.acceleration;
+      let fallback = false;
+
+      if (!acceleration || acceleration.x == null || acceleration.y == null || acceleration.z == null) {
+        acceleration = event.accelerationIncludingGravity;
+        fallback = true;
+      }
+      if (!acceleration || acceleration.x == null || acceleration.y == null || acceleration.z == null) {
+        statusText.textContent = '加速度データを取得できません';
+        return;
+      }
+
+      const magnitude = Math.hypot(acceleration.x, acceleration.y, acceleration.z);
+      magnitudeOutput.value = magnitude.toFixed(1);
+      if (magnitude > peak) {
+        peak = magnitude;
+        peakOutput.value = peak.toFixed(1);
+      }
+      if (fallback) statusText.textContent = '計測中（重力込みデータへフォールバック）';
+      if (magnitude > Number(thresholdInput.value)) triggerHit();
+    }
+
+    async function start() {
+      startButton.disabled = true;
+      statusText.textContent = '準備中…';
+
+      hitAudio.volume = 0;
+      const unlockPromise = hitAudio.play()
+        .then(() => {
+          hitAudio.pause();
+          hitAudio.currentTime = 0;
+          hitAudio.volume = 1;
+        })
+        .catch(() => {
+          hitAudio.volume = 1;
+        });
+
+      let permission = '不要';
+      try {
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+          permission = await DeviceMotionEvent.requestPermission();
+        }
+        await unlockPromise;
+
+        if (permission === 'denied') {
+          statusText.textContent = 'モーション許可: denied（手動ボタンは使用可能）';
+          startButton.textContent = '許可されませんでした';
+          return;
+        }
+        if (!listening) {
+          window.addEventListener('devicemotion', handleMotion);
+          listening = true;
+        }
+        statusText.textContent = `モーション許可: ${permission}・計測中`;
+        startButton.textContent = '計測中';
+      } catch (error) {
+        await unlockPromise;
+        statusText.textContent = `開始エラー: ${error.message || error}`;
+        startButton.textContent = '開始できませんでした';
+      }
+    }
+
+    startButton.addEventListener('click', start);
+    manualButton.addEventListener('click', triggerHit);
+  </script>
+</body>
+</html>
