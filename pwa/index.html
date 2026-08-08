@@ -671,17 +671,17 @@
 
       function createDistrictLabel(district, monthly, heatStyle) {
         const canvas = document.createElement('canvas');
-        canvas.width = 640; canvas.height = 160;
+        canvas.width = 960; canvas.height = 240;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = heatStyle.background; ctx.fillRect(0, 0, 640, 160);
+        ctx.fillStyle = heatStyle.background; ctx.fillRect(0, 0, 960, 240);
         ctx.strokeStyle = heatStyle.heat > .7 ? '#ffb7a5' : '#c8dcf2';
-        ctx.lineWidth = 10; ctx.strokeRect(5, 5, 630, 150);
-        ctx.fillStyle = '#fff8ed'; ctx.font = '900 52px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(`${district.name} ${district.genre ? `${formatYen(monthly)}/月` : '・公園'}`, 320, 82);
+        ctx.lineWidth = 15; ctx.strokeRect(7.5, 7.5, 945, 225);
+        ctx.fillStyle = '#fff8ed'; ctx.font = '900 78px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`${district.name} ${district.genre ? `${formatYen(monthly)}/月` : '・公園'}`, 480, 123);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
-        label.scale.set(2.75, .69, 1);
+        label.scale.set(4.125, 1.035, 1);
         placeOnPlanet(label, district.center[0], district.center[1] + district.size[1] / 2 - .08, 1.12);
         return label;
       }
@@ -1087,18 +1087,25 @@
 
       function createSign(sub) {
         const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 256;
+        canvas.width = 704; canvas.height = 352;
         const ctx = canvas.getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 512, 256);
+        const gradient = ctx.createLinearGradient(0, 0, 704, 352);
         gradient.addColorStop(0, sub.contracted ? '#291d65' : '#4d4b55');
         gradient.addColorStop(1, sub.contracted ? '#6941aa' : '#77737d');
-        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 256);
-        ctx.strokeStyle = sub.contracted ? '#ffd65c' : '#aaa5af'; ctx.lineWidth = 13; ctx.strokeRect(8, 8, 496, 240);
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 704, 352);
+        ctx.strokeStyle = sub.contracted ? '#ffd65c' : '#aaa5af'; ctx.lineWidth = 18; ctx.strokeRect(11, 11, 682, 330);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.font = '86px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(sub.icon, 92, 114);
-        ctx.font = `900 ${sub.name.length > 7 ? 45 : 55}px sans-serif`; ctx.fillText(sub.name, 320, 87);
-        ctx.font = '700 38px sans-serif'; ctx.fillStyle = sub.contracted ? '#ffe47d' : '#ddd9df';
-        ctx.fillText(sub.contracted ? `${formatYen(sub.price)}/mo` : '未契約', 320, 164);
+        ctx.font = '118px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(sub.icon, 127, 157);
+        const signNameMaxWidth = 430;
+        let signNameFontSize = sub.name.length > 7 ? 62 : 74;
+        do {
+          ctx.font = `900 ${signNameFontSize}px sans-serif`;
+          if (ctx.measureText(sub.name).width <= signNameMaxWidth || signNameFontSize <= 42) break;
+          signNameFontSize -= 1;
+        } while (true);
+        ctx.fillText(sub.name, 440, 120);
+        ctx.font = '700 52px sans-serif'; ctx.fillStyle = sub.contracted ? '#ffe47d' : '#ddd9df';
+        ctx.fillText(sub.contracted ? `${formatYen(sub.price)}/mo` : '未契約', 440, 226);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.22, .61), new THREE.MeshBasicMaterial({ map: texture, transparent: true }));
