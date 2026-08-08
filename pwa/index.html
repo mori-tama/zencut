@@ -318,6 +318,16 @@
         { name: 'Amazonプライム', icon: '📦', genre: 'おかいもの', contracted: true, price: 600, months: 30, color: 0xf08756, dark: 0xb74e46, position: [4.7, -.4] },
         { name: '楽天プレミアム', icon: '🛍️', genre: 'おかいもの', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [6.1, -.4] }
       ];
+      let scanResult = null;
+      try {
+        const savedScan = localStorage.getItem('zencut-scan');
+        if (savedScan) {
+          const parsedScan = JSON.parse(savedScan);
+          if (parsedScan && Array.isArray(parsedScan.subs) && parsedScan.subs.length > 0) scanResult = parsedScan;
+        }
+      } catch (error) {
+        scanResult = null;
+      }
       // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす
       subscriptions.forEach(sub => {
         sub.position[0] += (Math.random() - .5) * .56;
@@ -984,7 +994,9 @@
         openingRunning = true;
         opening.classList.remove('building');
         opening.classList.add('visible');
-        scanMessage.textContent = '📩 Gmailをスキャン中…';
+        scanMessage.textContent = scanResult
+          ? '📩 あなたのGmailのスキャン結果を読み込み中…'
+          : '📩 Gmailをスキャン中…';
         mailCount.textContent = '0';
         mailLabel.textContent = '請求メールを確認しています';
         scheduleOpening(() => {
@@ -999,9 +1011,20 @@
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          scanMessage.textContent = '契約中サブスク 13本 発見';
-          mailLabel.textContent = '同じジャンルの重複も見つかりました';
+          if (scanResult) {
+            const total = scanResult.subs.reduce((sum, sub) => {
+              const price = Number(sub.price);
+              return sum + (Number.isFinite(price) ? price : 0);
+            }, 0);
+            scanMessage.textContent = `契約サブスク ${scanResult.subs.length}本・月額合計 ${formatYen(total)} を検出`;
+          } else {
+            scanMessage.textContent = '契約中サブスク 13本 発見';
+            mailLabel.textContent = '同じジャンルの重複も見つかりました';
+          }
         }, 1750);
+        if (scanResult) scheduleOpening(() => {
+          scanMessage.textContent = 'デモの街で再現します';
+        }, 2200);
         scheduleOpening(beginCityBuild, 2450);
       }
 
