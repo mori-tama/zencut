@@ -150,7 +150,7 @@
 
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">契約中 <span id="active-count">17本</span>　月額合計 <span id="contract-total">¥34,430</span></div>
+      <div class="counter-main">契約中 <span id="active-count">0本</span>　月額合計 <span id="contract-total">¥0</span></div>
       <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
@@ -209,7 +209,7 @@
         { name: 'みどり公園', center: [6, -6], size: [5.4, 5.4] },
         { name: 'ひろば公園', center: [12, -6], size: [5.4, 5.4] }
       ];
-      const subscriptions = [
+      const mockSubscriptions = [
         { name: 'CHATTY', icon: '🤖', genre: 'AI', contracted: true, price: 3900, months: 24, color: 0xe36568, dark: 0x8d3c62, position: [-13.7, 4.75] },
         { name: 'BRAINIA', icon: '🧠', genre: 'AI', contracted: true, price: 3000, months: 12, color: 0xc95da9, dark: 0x713d84, position: [-12, 4.75] },
         { name: 'PIXGEN', icon: '🎨', genre: 'AI', contracted: true, price: 1480, months: 6, color: 0xed8171, dark: 0x9b466d, position: [-10.3, 4.75] },
@@ -253,6 +253,119 @@
         { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [-1.1, -4.95] },
         { name: 'PODCASTLE', icon: '🎙️', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [.85, -4.95] }
       ];
+      const knownGenres = new Set(districts.map(district => district.genre));
+      const otherDistrictCenter = [6, -6];
+      const scanSlotOffsets = [
+        [-2.1, -1.25], [-.7, -1.25], [.7, -1.25], [2.1, -1.25],
+        [-2.1, 1.05], [-.7, 1.05], [.7, 1.05], [2.1, 1.05]
+      ];
+      let subscriptions = mockSubscriptions;
+      let scanMode = false;
+      let scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+
+      function scanDistrictGenre(genre) {
+        return knownGenres.has(genre) ? genre : 'そのほか';
+      }
+
+      function getDistrictGenre(sub) {
+        return sub.districtGenre || sub.genre;
+      }
+
+      function scanPositionFor(genre, index) {
+        const district = knownGenres.has(genre)
+          ? districts.find(item => item.genre === genre)
+          : { center: otherDistrictCenter };
+        const offset = scanSlotOffsets[index % scanSlotOffsets.length];
+        return [district.center[0] + offset[0], district.center[1] + offset[1]];
+      }
+
+      function scanPaletteFor(genre, index) {
+        const candidates = mockSubscriptions.filter(sub => sub.contracted && sub.genre === genre);
+        const palette = candidates.length
+          ? candidates[index % candidates.length]
+          : mockSubscriptions.filter(sub => sub.contracted)[index % mockSubscriptions.filter(sub => sub.contracted).length];
+        return { color: palette.color, dark: palette.dark };
+      }
+
+      function readScanData() {
+        try {
+          if (/(?:^|[?&])mock=1(?:&|$)/.test(location.search)) return null;
+          const raw = localStorage.getItem('zencut-scan');
+          if (raw == null) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object' || !Number.isFinite(parsed.at) || !Array.isArray(parsed.subs)) {
+            throw new Error('atまたはsubs配列がありません');
+          }
+          if (parsed.subs.length === 0) return null;
+          parsed.subs.forEach((sub, index) => {
+            if (!sub || typeof sub !== 'object'
+              || typeof sub.name !== 'string' || !sub.name.trim()
+              || typeof sub.icon !== 'string' || !sub.icon
+              || typeof sub.genre !== 'string' || !sub.genre.trim()
+              || sub.contracted !== true
+              || !Number.isFinite(sub.price) || sub.price < 0
+              || !Number.isFinite(sub.months) || sub.months < 0) {
+              throw new Error(`subs[${index}]の形式が不正です`);
+            }
+          });
+          return parsed.subs.map(sub => ({
+            name: sub.name.trim(),
+            icon: sub.icon,
+            genre: sub.genre.trim(),
+            contracted: true,
+            price: sub.price,
+            months: sub.months
+          }));
+        } catch (error) {
+          console.warn('zencut-scanを読み込めないためモックデータで起動します', error);
+          return null;
+        }
+      }
+
+      function applyScanData(scanSubs) {
+        if (!scanSubs) return;
+        const grouped = new Map();
+        scanSubs.forEach(sub => {
+          const districtGenre = scanDistrictGenre(sub.genre);
+          if (!grouped.has(districtGenre)) grouped.set(districtGenre, []);
+          grouped.get(districtGenre).push({ ...sub, districtGenre });
+        });
+        const accepted = [];
+        [...knownGenres, 'そのほか'].forEach(genre => {
+          const group = grouped.get(genre) || [];
+          group.sort((a, b) => b.price - a.price);
+          group.slice(0, 4).forEach((sub, index) => {
+            const palette = scanPaletteFor(genre, index);
+            accepted.push({
+              ...sub,
+              ...palette,
+              position: scanPositionFor(genre, index)
+            });
+          });
+        });
+        subscriptions = [
+          ...mockSubscriptions.filter(sub => !sub.contracted),
+          ...accepted
+        ];
+        scanMode = true;
+        scanSubscriptionCount = scanSubs.length;
+        if (grouped.has('そのほか') && grouped.get('そのほか').length > 0) {
+          districts.push({ genre: 'そのほか', name: 'そのほか街', center: otherDistrictCenter, size: [5.4, 5.4] });
+        }
+      }
+
+      function initializeStartupData() {
+        try {
+          applyScanData(readScanData());
+        } catch (error) {
+          console.warn('スキャンデータの適用に失敗したためモックデータで起動します', error);
+          subscriptions = mockSubscriptions;
+          scanMode = false;
+          scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+        }
+      }
+
+      initializeStartupData();
       const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'item-get1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2', 'drum-japanese1'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -333,7 +446,7 @@
       scene.add(townBase);
 
       const districtMonthly = genre => subscriptions
-        .filter(sub => sub.genre === genre && sub.contracted)
+        .filter(sub => getDistrictGenre(sub) === genre && sub.contracted)
         .reduce((sum, sub) => sum + sub.price, 0);
       const districtTotals = districts.map(district => districtMonthly(district.genre));
       const districtMin = Math.min(...districtTotals);
@@ -366,7 +479,11 @@
         return label;
       }
 
-      [...districts, ...parkBlocks].forEach(block => {
+      const layoutBlocks = [
+        ...districts,
+        ...parkBlocks.filter(park => !districts.some(district => district.center[0] === park.center[0] && district.center[1] === park.center[1]))
+      ];
+      layoutBlocks.forEach(block => {
         const monthly = block.genre ? districtMonthly(block.genre) : 0;
         const heatStyle = block.genre ? districtHeat(monthly) : {
           heat: 0,
@@ -719,11 +836,11 @@
         clearInterval(openingInterval);
         openingInterval = null;
         opening.classList.add('building');
-        scanMessage.textContent = '🏙️ サブスク地図を建設中…';
-        mailCount.textContent = String(subscriptions.length);
-        mailLabel.textContent = '見つかったサービスを街に並べています';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '🏙️ サブスク地図を建設中…';
+        mailCount.textContent = String(scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length);
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '見つかったサービスを街に並べています';
         const buildOrder = districts.flatMap(district =>
-          buildings.filter(building => building.userData.sub.genre === district.genre)
+          buildings.filter(building => getDistrictGenre(building.userData.sub) === district.genre)
         );
         buildOrder.forEach((building, index) => {
           scheduleOpening(() => {
@@ -751,23 +868,26 @@
         openingRunning = true;
         opening.classList.remove('building');
         opening.classList.add('visible');
-        scanMessage.textContent = '📩 Gmailをスキャン中…';
+        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '📩 Gmailをスキャン中…';
         mailCount.textContent = '0';
-        mailLabel.textContent = '請求メールを確認しています';
+        mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '請求メールを確認しています';
         scheduleOpening(() => {
           let count = 0;
           openingInterval = setInterval(() => {
-            count = Math.min(subscriptions.length, count + 1);
+            const targetCount = scanMode ? scanSubscriptionCount : subscriptions.filter(sub => sub.contracted).length;
+            count = Math.min(targetCount, count + 1);
             mailCount.textContent = String(count);
-            if (count === subscriptions.length) {
+            if (count === targetCount) {
               clearInterval(openingInterval);
               openingInterval = null;
             }
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          scanMessage.textContent = '契約中サブスク 17本 発見';
-          mailLabel.textContent = '同じジャンルの重複も見つかりました';
+          scanMessage.textContent = scanMode
+            ? 'スキャン済みデータから街を再建中…'
+            : `契約中サブスク ${subscriptions.filter(sub => sub.contracted).length}本 発見`;
+          mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '同じジャンルの重複も見つかりました';
         }, 1750);
         scheduleOpening(beginCityBuild, 2450);
       }
