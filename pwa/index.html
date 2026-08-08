@@ -50,7 +50,8 @@
       box-shadow: 0 7px 25px rgba(5,4,30,.34), inset 0 1px rgba(255,255,255,.18); backdrop-filter: blur(10px);
     }
     .counter-main { font-size: clamp(.93rem, 4vw, 1.14rem); font-weight: 800; }
-    #monthly { display: inline-block; color: var(--gold); font-size: 1.35em; font-weight: 1000; font-variant-numeric: tabular-nums; }
+    #contract-total { color: #fff; font-size: 1.08em; font-weight: 1000; font-variant-numeric: tabular-nums; }
+    #monthly { display: inline-block; color: var(--gold); font-size: 1.28em; font-weight: 1000; font-variant-numeric: tabular-nums; }
     #monthly.bump { animation: bump .55s ease; }
     .counter-sub { margin-top: 1px; color: #e5dffc; font-size: .76rem; letter-spacing: .08em; }
 
@@ -67,10 +68,19 @@
       border-radius: 24px; background: var(--glass); box-shadow: 0 12px 40px rgba(4,3,27,.48); backdrop-filter: blur(14px);
       text-align: center; transform: translateY(calc(100% + 28px)); opacity: 0; transition: .28s cubic-bezier(.2,.9,.2,1.1); pointer-events: none;
     }
-    #sheet.visible { transform: translateY(0); opacity: 1; }
+    #sheet.visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
     #sheet-title { margin: 0; color: #fff; font-size: 1.25rem; font-weight: 1000; }
     #sheet-detail { margin: 4px 0 10px; color: #ddd5f5; font-size: .91rem; }
-    #sheet-action { margin: 0; color: var(--gold); font-size: 1.05rem; font-weight: 1000; animation: pulse 1s ease-in-out infinite; }
+    #sheet-action { margin: 8px 0 1px; color: var(--gold); font-size: 1.05rem; font-weight: 1000; animation: pulse 1s ease-in-out infinite; }
+    #sheet-action[hidden], #sheet-choices[hidden], #cancel-keep[hidden] { display: none; }
+    #sheet-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .choice-button, #cancel-keep {
+      min-height: 52px; border: 1px solid rgba(255,255,255,.28); border-radius: 16px; color: #fff;
+      font-weight: 1000; cursor: pointer; touch-action: manipulation; box-shadow: inset 0 1px rgba(255,255,255,.2);
+    }
+    #keep-button { background: linear-gradient(135deg, #17875d, #36b977); }
+    #destroy-button { background: linear-gradient(135deg, #b43138, #f35d3c); }
+    #cancel-keep { width: 100%; background: rgba(255,255,255,.12); }
 
     #flash { position: fixed; z-index: 7; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(circle, #fffde0, #ffbf24 28%, #ff4d00 58%, transparent 73%); mix-blend-mode: screen; }
     #flash.go { animation: flash .44s ease-out; }
@@ -80,7 +90,7 @@
       background: radial-gradient(circle at 50% 56%, rgba(255,205,55,.28), rgba(15,10,55,.78) 52%, rgba(9,7,35,.94));
       opacity: 0; visibility: hidden; transition: opacity .7s, visibility .7s; pointer-events: none;
     }
-    #celebration.visible { opacity: 1; visibility: visible; }
+    #celebration.visible { opacity: 1; visibility: visible; pointer-events: auto; }
     .celebrate-card { text-align: center; }
     #celebration.visible .celebrate-card { animation: rise .8s cubic-bezier(.2,.9,.2,1.2); }
     .celebrate-icon { font-size: clamp(5rem, 25vw, 9rem); filter: drop-shadow(0 0 25px #ffc928); }
@@ -100,8 +110,8 @@
 
   <header id="hud">
     <div class="counter">
-      <div class="counter-main">月あたり <span id="monthly">¥0</span> 節約中</div>
-      <div class="counter-sub">年間 <span id="annual">¥0</span></div>
+      <div class="counter-main">契約中 <span id="active-count">7本</span>　月額合計 <span id="contract-total">¥15,010</span></div>
+      <div class="counter-sub">▼<span id="monthly">¥0</span> 節約　年間 <span id="annual">¥0</span></div>
     </div>
   </header>
   <div id="hint">ビルをタップして選択 <span id="motion-status">・PCはダブルクリックで爆破</span></div>
@@ -109,15 +119,20 @@
   <aside id="sheet" aria-live="polite">
     <h2 id="sheet-title"></h2>
     <p id="sheet-detail"></p>
-    <p id="sheet-action">📱 振りかぶって叩きつけろ！</p>
+    <div id="sheet-choices">
+      <button id="keep-button" class="choice-button" type="button">🌱 育てる</button>
+      <button id="destroy-button" class="choice-button" type="button">💥 叩き壊す</button>
+    </div>
+    <button id="cancel-keep" type="button" hidden>育成を取り消す</button>
+    <p id="sheet-action" hidden>📱 振りかぶって叩きつけろ！</p>
   </aside>
   <div id="flash"></div>
 
   <section id="celebration" aria-live="assertive">
     <div class="celebrate-card">
       <div class="celebrate-icon">🌱</div>
-      <h2>すべて解放！<strong>月々 ¥12,940 の節約に成功！</strong></h2>
-      <p>年間 ¥155,280 が、あなたの未来に育ちます。</p>
+      <h2>あなたの街が、整いました。<strong id="celebration-saving">月々 ¥0 の節約</strong></h2>
+      <p id="celebration-annual">育てるものと手放すものを、選びました。</p>
     </div>
   </section>
 
@@ -134,14 +149,29 @@
     (() => {
       'use strict';
 
-      const subscriptions = [
-        { name: 'MOOVA', icon: '🎬', category: '動画', price: 2400, months: 36, color: 0xf05252, dark: 0x8b294d },
-        { name: 'BEATLY', icon: '🎵', category: '音楽', price: 980, months: 24, color: 0x3299db, dark: 0x294b9b },
-        { name: 'GYMO', icon: '🏋️', category: 'ジム', price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70 },
-        { name: 'LINGOZA', icon: '📖', category: '英会話', price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42 },
-        { name: 'GEMPOP', icon: '💎', category: 'ゲーム課金', price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f }
+      const districts = [
+        { genre: '動画', name: '動画街', color: 0x713c62, center: [-5.1, -1.45], size: [3.4, 3.2] },
+        { genre: '音楽', name: '音楽街', color: 0x315b83, center: [0, -3.15], size: [4.2, 2.4] },
+        { genre: 'ゲーム', name: 'ゲーム街', color: 0x563d80, center: [5.05, -1.45], size: [3.2, 3.0] },
+        { genre: '学び', name: '学び街', color: 0x795239, center: [-3.05, 2.25], size: [4.2, 2.8] },
+        { genre: 'からだ', name: 'からだ街', color: 0x28695c, center: [3.4, 2.25], size: [3.5, 2.8] }
       ];
-      const positions = [[-3.7, 1.1], [-1.85, -.9], [0, 1.35], [1.85, -.9], [3.7, 1.1]];
+      const subscriptions = [
+        { name: 'MOOVA', icon: '🎬', genre: '動画', contracted: true, price: 2400, months: 36, color: 0xf05252, dark: 0x8b294d, position: [-5.75, -2.05] },
+        { name: 'CINEPOP', icon: '🍿', genre: '動画', contracted: true, price: 990, months: 14, color: 0xe95b8e, dark: 0x8b315f, position: [-4.45, -2.05] },
+        { name: 'PRIMELY', icon: '▶️', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-5.75, -.75] },
+        { name: 'TUBEMAX', icon: '📺', genre: '動画', contracted: false, price: 0, months: 0, color: 0x777381, dark: 0x4d4b57, position: [-4.45, -.75] },
+        { name: 'BEATLY', icon: '🎵', genre: '音楽', contracted: true, price: 980, months: 24, color: 0x3299db, dark: 0x294b9b, position: [-1.35, -3.15] },
+        { name: 'TUNEBOX', icon: '🎧', genre: '音楽', contracted: true, price: 1080, months: 8, color: 0x48b8d5, dark: 0x31689b, position: [0, -3.15] },
+        { name: 'MELODIN', icon: '🎼', genre: '音楽', contracted: false, price: 0, months: 0, color: 0x727985, dark: 0x474d57, position: [1.35, -3.15] },
+        { name: 'GEMPOP', icon: '💎', genre: 'ゲーム', contracted: true, price: 1280, months: 30, color: 0xa54cce, dark: 0x4b388f, position: [4.45, -1.65] },
+        { name: 'PLAYPASS', icon: '🎮', genre: 'ゲーム', contracted: false, price: 0, months: 0, color: 0x777181, dark: 0x4b4855, position: [5.75, -1.65] },
+        { name: 'LINGOZA', icon: '📖', genre: '学び', contracted: true, price: 480, months: 12, color: 0xf1a328, dark: 0xc04c42, position: [-4.35, 2.25] },
+        { name: 'SKILLPON', icon: '✏️', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-3.05, 2.25] },
+        { name: 'BRAINGO', icon: '🧠', genre: '学び', contracted: false, price: 0, months: 0, color: 0x81776e, dark: 0x554f49, position: [-1.75, 2.25] },
+        { name: 'GYMO', icon: '🏋️', genre: 'からだ', contracted: true, price: 7800, months: 18, color: 0x23ad79, dark: 0x126b70, position: [2.75, 2.25] },
+        { name: 'FITMORE', icon: '🏃', genre: 'からだ', contracted: false, price: 0, months: 0, color: 0x6f7e79, dark: 0x46524f, position: [4.05, 2.25] }
+      ];
       const audioNames = ['big-explosion1', 'building-collapse-little1', 'hyun1', 'nyu1', 'jajean1', 'shine2', 'money-drop1', 'amount-display1', 'extend1', 'kira2'];
       const sounds = Object.fromEntries(audioNames.map(name => [name, new Audio(`./assets/se/${name}.mp3`)]));
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -162,20 +192,29 @@
       const sheet = document.querySelector('#sheet');
       const sheetTitle = document.querySelector('#sheet-title');
       const sheetDetail = document.querySelector('#sheet-detail');
+      const sheetChoices = document.querySelector('#sheet-choices');
+      const sheetAction = document.querySelector('#sheet-action');
+      const keepButton = document.querySelector('#keep-button');
+      const destroyButton = document.querySelector('#destroy-button');
+      const cancelKeepButton = document.querySelector('#cancel-keep');
       const monthlyOutput = document.querySelector('#monthly');
       const annualOutput = document.querySelector('#annual');
+      const activeCountOutput = document.querySelector('#active-count');
+      const contractTotalOutput = document.querySelector('#contract-total');
       const flash = document.querySelector('#flash');
       const motionStatus = document.querySelector('#motion-status');
       const celebration = document.querySelector('#celebration');
+      const celebrationSaving = document.querySelector('#celebration-saving');
+      const celebrationAnnual = document.querySelector('#celebration-annual');
       const startButton = document.querySelector('#start');
       const titleScreen = document.querySelector('#title-screen');
       const formatYen = value => `¥${Math.round(value).toLocaleString('ja-JP')}`;
 
       const scene = new THREE.Scene();
-      scene.fog = new THREE.Fog(0x4c286d, 17, 35);
+      scene.fog = new THREE.Fog(0x4c286d, 24, 48);
       const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, .1, 100);
-      camera.position.set(0, 10.3, innerWidth / innerHeight < .7 ? 28 : 20);
-      camera.lookAt(0, 3.5, 0);
+      camera.position.set(0, 14.2, innerWidth / innerHeight < .7 ? 39 : 29);
+      camera.lookAt(0, 2.4, 0);
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
@@ -209,6 +248,33 @@
       plaza.receiveShadow = true;
       scene.add(plaza);
 
+      function createDistrictLabel(district) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 384; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#241849'; ctx.fillRect(0, 0, 384, 128);
+        ctx.strokeStyle = '#ffe07a'; ctx.lineWidth = 9; ctx.strokeRect(5, 5, 374, 118);
+        ctx.fillStyle = '#fff8db'; ctx.font = '900 55px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(district.name, 192, 66);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+        label.scale.set(1.85, .62, 1);
+        label.position.set(district.center[0], .62, district.center[1] + district.size[1] / 2 - .15);
+        return label;
+      }
+
+      districts.forEach(district => {
+        const tile = new THREE.Mesh(
+          new THREE.BoxGeometry(district.size[0], .14, district.size[1]),
+          new THREE.MeshStandardMaterial({ color: district.color, roughness: .72, metalness: .08 })
+        );
+        tile.position.set(district.center[0], .13, district.center[1]);
+        tile.receiveShadow = true;
+        scene.add(tile);
+        scene.add(createDistrictLabel(district));
+      });
+
       const starGeometry = new THREE.BufferGeometry();
       const starPositions = [];
       for (let i = 0; i < 85; i += 1) starPositions.push((Math.random() - .5) * 35, 8 + Math.random() * 16, -7 - Math.random() * 10);
@@ -226,6 +292,9 @@
       let treeStage = 0;
       let treeGrowthStarted = performance.now();
       let selected = null;
+      let destroyArmed = false;
+      let celebrationShown = false;
+      let celebrationTimer = null;
       let savedMonthly = 0;
       let destroyedCount = 0;
       let cameraShake = 0;
@@ -254,29 +323,33 @@
         canvas.width = 512; canvas.height = 256;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 512, 256);
-        gradient.addColorStop(0, '#291d65'); gradient.addColorStop(1, '#6941aa');
+        gradient.addColorStop(0, sub.contracted ? '#291d65' : '#4d4b55');
+        gradient.addColorStop(1, sub.contracted ? '#6941aa' : '#77737d');
         ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 256);
-        ctx.strokeStyle = '#ffd65c'; ctx.lineWidth = 13; ctx.strokeRect(8, 8, 496, 240);
+        ctx.strokeStyle = sub.contracted ? '#ffd65c' : '#aaa5af'; ctx.lineWidth = 13; ctx.strokeRect(8, 8, 496, 240);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.font = '86px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText(sub.icon, 92, 114);
-        ctx.font = '900 55px sans-serif'; ctx.fillText(sub.name, 320, 87);
-        ctx.font = '700 38px sans-serif'; ctx.fillStyle = '#ffe47d'; ctx.fillText(`${formatYen(sub.price)}/mo`, 320, 164);
+        ctx.font = `900 ${sub.name.length > 7 ? 45 : 55}px sans-serif`; ctx.fillText(sub.name, 320, 87);
+        ctx.font = '700 38px sans-serif'; ctx.fillStyle = sub.contracted ? '#ffe47d' : '#ddd9df';
+        ctx.fillText(sub.contracted ? `${formatYen(sub.price)}/mo` : '未契約', 320, 164);
         const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
-        const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.25, 1.12), new THREE.MeshBasicMaterial({ map: texture, transparent: true }));
-        sign.position.z = .94;
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.22, .61), new THREE.MeshBasicMaterial({ map: texture, transparent: true }));
+        sign.position.z = .56;
         return sign;
       }
 
       function addWindows(group, width, height, baseY, sub) {
-        const rows = Math.max(2, Math.floor(height / .85));
-        const cols = width > 2 ? 3 : 2;
-        const material = new THREE.MeshStandardMaterial({ color: 0xffe16a, emissive: 0xff9d23, emissiveIntensity: 2.1 });
+        const rows = Math.max(1, Math.floor(height / .62));
+        const cols = 2;
+        const material = sub.contracted
+          ? new THREE.MeshStandardMaterial({ color: 0xffe16a, emissive: 0xff9d23, emissiveIntensity: 2.1 })
+          : new THREE.MeshStandardMaterial({ color: 0x555665, emissive: 0x151620, emissiveIntensity: .15 });
         for (let row = 0; row < rows; row += 1) {
           for (let col = 0; col < cols; col += 1) {
             if ((row + col + sub.months) % 5 === 0) continue;
-            const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(.32, .28, .055), material);
-            windowMesh.position.set((col - (cols - 1) / 2) * .57, baseY - height / 2 + .6 + row * .71, 1.015);
+            const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(.19, .17, .035), material);
+            windowMesh.position.set((col - .5) * .38, baseY - height / 2 + .38 + row * .48, .558);
             group.add(windowMesh);
           }
         }
@@ -284,34 +357,81 @@
 
       function createBuilding(sub, index) {
         const paid = sub.price * sub.months;
-        const height = 3.2 + Math.sqrt(paid / 140400) * 5.3;
+        const height = sub.contracted ? 1.75 + Math.sqrt(paid / 140400) * 4.15 : 1.35;
         const group = new THREE.Group();
-        group.position.set(positions[index][0], 0, positions[index][1]);
-        group.rotation.y = positions[index][0] * -.012;
-        group.userData = { sub, index, destroyed: false, baseX: group.position.x, baseY: 0, height };
+        group.position.set(sub.position[0], .18, sub.position[1]);
+        group.rotation.y = sub.position[0] * -.009;
+        group.userData = { sub, index, destroyed: false, decision: null, baseX: group.position.x, baseY: .18, height, duplicateBadge: null, keepDecoration: null };
 
-        const bodyHeight = height - 1.35;
-        const base = roundedBox(2.15, bodyHeight, 1.9, sub.color, bodyHeight / 2 + .1);
+        const bodyHeight = height - .72;
+        const base = roundedBox(1.14, bodyHeight, 1.05, sub.color, bodyHeight / 2 + .08);
+        base.castShadow = sub.contracted;
         base.userData.building = group;
-        group.add(base); clickableMeshes.push(base);
-        addWindows(group, 2.15, bodyHeight, bodyHeight / 2 + .1, sub);
+        group.add(base);
+        if (sub.contracted) clickableMeshes.push(base);
+        group.userData.body = base;
+        addWindows(group, 1.14, bodyHeight, bodyHeight / 2 + .08, sub);
 
-        const upper = roundedBox(1.92, 1.34, 1.72, sub.dark, height - .58);
+        const upper = roundedBox(1.02, .72, .95, sub.dark, height - .3);
+        upper.castShadow = sub.contracted;
         upper.userData.building = group;
-        group.add(upper); clickableMeshes.push(upper);
-        const roof = roundedBox(1.55, .35, 1.38, 0x413267, height + .25, .04);
+        group.add(upper);
+        if (sub.contracted) clickableMeshes.push(upper);
+        const roof = roundedBox(.82, .18, .76, sub.contracted ? 0x413267 : 0x55545d, height + .14, .04);
+        roof.castShadow = sub.contracted;
         group.add(roof);
-        const cap = roundedBox(.82, .35, .72, sub.color, height + .58, .03);
+        const cap = roundedBox(.43, .18, .4, sub.color, height + .32, .03);
+        cap.castShadow = sub.contracted;
         group.add(cap);
-        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.045, .065, .7, 8), new THREE.MeshStandardMaterial({ color: 0xffd75e, emissive: 0xff8a1f, emissiveIntensity: 1.5 }));
-        antenna.position.y = height + 1.1; group.add(antenna);
-        const sign = createSign(sub); sign.position.y = height - .57; sign.userData.building = group; group.add(sign); clickableMeshes.push(sign);
+        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.025, .035, .38, 7), new THREE.MeshStandardMaterial({ color: sub.contracted ? 0xffd75e : 0x77747d, emissive: sub.contracted ? 0xff8a1f : 0x111111, emissiveIntensity: sub.contracted ? 1.5 : 0 }));
+        antenna.position.y = height + .6; group.add(antenna);
+        const sign = createSign(sub); sign.position.y = height - .3; sign.userData.building = group; group.add(sign);
+        if (sub.contracted) clickableMeshes.push(sign);
 
-        const halo = new THREE.Mesh(new THREE.RingGeometry(1.65, 1.85, 32), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+        const halo = new THREE.Mesh(new THREE.RingGeometry(.73, .89, 24), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0, side: THREE.DoubleSide }));
         halo.rotation.x = -Math.PI / 2; halo.position.y = .14; group.add(halo); group.userData.halo = halo;
         scene.add(group); buildings.push(group);
       }
       subscriptions.forEach(createBuilding);
+
+      function createDuplicateBadge(building) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 96;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#d9293f'; ctx.fillRect(4, 4, 248, 88);
+        ctx.strokeStyle = '#fff0dc'; ctx.lineWidth = 7; ctx.strokeRect(4, 4, 248, 88);
+        ctx.fillStyle = '#fff'; ctx.font = '900 40px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('⚠ 重複', 128, 50);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const badge = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+        badge.scale.set(1.45, .54, 1);
+        badge.userData.baseY = building.userData.height + 1.15;
+        badge.position.y = badge.userData.baseY;
+        badge.visible = false;
+        building.add(badge);
+        building.userData.duplicateBadge = badge;
+      }
+
+      function updateDuplicateBadges() {
+        const activeByGenre = {};
+        buildings.forEach(building => {
+          const { sub, destroyed } = building.userData;
+          if (sub.contracted && !destroyed) activeByGenre[sub.genre] = (activeByGenre[sub.genre] || 0) + 1;
+        });
+        buildings.forEach(building => {
+          const { sub, destroyed, duplicateBadge } = building.userData;
+          if (!duplicateBadge && sub.contracted) createDuplicateBadge(building);
+          if (building.userData.duplicateBadge) building.userData.duplicateBadge.visible = !destroyed && activeByGenre[sub.genre] >= 2;
+        });
+      }
+      updateDuplicateBadges();
+
+      function updateContractHeader() {
+        const active = buildings.filter(building => building.userData.sub.contracted && !building.userData.destroyed);
+        activeCountOutput.textContent = `${active.length}本`;
+        contractTotalOutput.textContent = formatYen(active.reduce((sum, building) => sum + building.userData.sub.price, 0));
+      }
+      updateContractHeader();
 
       function addTreePart(geometry, material, position, scale, rotation) {
         const mesh = new THREE.Mesh(geometry, material);
@@ -408,17 +528,89 @@
       scene.add(savingsTree);
       rebuildSavingsTree(0);
 
-      function selectBuilding(building) {
-        if (!building || building.userData.destroyed) return;
-        playSound('hyun1', .72);
-        if (selected) selected.userData.halo.material.opacity = 0;
-        selected = building;
-        selected.userData.halo.material.opacity = .95;
-        const sub = building.userData.sub;
+      function createKeepDecoration(building) {
+        if (building.userData.keepDecoration) {
+          building.userData.keepDecoration.visible = true;
+          building.userData.keepDecoration.scale.setScalar(.01);
+          building.userData.keepDecoration.userData.born = performance.now();
+          building.userData.body.material.emissive.setHex(0x16854b);
+          building.userData.body.material.emissiveIntensity = .75;
+          return;
+        }
+        const mini = new THREE.Group();
+        mini.position.y = building.userData.height + .52;
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffdd45, emissive: 0xff9c14, emissiveIntensity: 1.5, metalness: .25, roughness: .3 });
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(.035, .055, .48, 7), gold);
+        stem.position.y = .22; mini.add(stem);
+        const leafGeometry = new THREE.SphereGeometry(.19, 8, 6);
+        const left = new THREE.Mesh(leafGeometry, gold); left.scale.set(1, .34, .6); left.rotation.z = .52; left.position.set(-.15, .44, 0); mini.add(left);
+        const right = left.clone(); right.rotation.z = -.52; right.position.x = .15; mini.add(right);
+        const aura = new THREE.PointLight(0x42ff91, 11, 3.5); aura.position.y = .3; mini.add(aura);
+        const auraRing = new THREE.Mesh(new THREE.RingGeometry(.62, .76, 24), new THREE.MeshBasicMaterial({ color: 0x55ff99, transparent: true, opacity: .8, side: THREE.DoubleSide }));
+        auraRing.rotation.x = -Math.PI / 2; auraRing.position.y = -building.userData.height - .36; mini.add(auraRing);
+        mini.scale.setScalar(.01);
+        mini.userData.born = performance.now();
+        building.add(mini);
+        building.userData.keepDecoration = mini;
+        building.userData.body.material.emissive.setHex(0x16854b);
+        building.userData.body.material.emissiveIntensity = .75;
+      }
+
+      function updateSheet() {
+        if (!selected || selected.userData.destroyed) {
+          sheet.classList.remove('visible');
+          return;
+        }
+        const { sub, decision } = selected.userData;
         sheetTitle.textContent = `${sub.icon} ${sub.name}  ${formatYen(sub.price)}/月`;
-        sheetDetail.textContent = `${sub.category}・${sub.months / 12}年契約中・累計${formatYen(sub.price * sub.months)}`;
+        sheetDetail.textContent = `${sub.genre}街・${sub.months}ヶ月契約中・累計${formatYen(sub.price * sub.months)}`;
+        sheetChoices.hidden = decision === 'keep' || destroyArmed;
+        cancelKeepButton.hidden = decision !== 'keep';
+        sheetAction.hidden = !destroyArmed;
+        if (decision === 'keep') sheetDetail.textContent += '・🌱育成中';
         sheet.classList.add('visible');
       }
+
+      function selectBuilding(building) {
+        if (!building || building.userData.destroyed || !building.userData.sub.contracted) return;
+        playSound('hyun1', .72);
+        const sameBuilding = selected === building;
+        if (selected) selected.userData.halo.material.opacity = 0;
+        selected = building;
+        if (!sameBuilding) destroyArmed = false;
+        selected.userData.halo.material.opacity = .95;
+        updateSheet();
+      }
+
+      function markKeep() {
+        if (!selected || selected.userData.destroyed) return;
+        selected.userData.decision = 'keep';
+        destroyArmed = false;
+        createKeepDecoration(selected);
+        playSound('extend1', .82);
+        setTimeout(() => playSound('kira2', .78), 230);
+        updateSheet();
+        checkAllDecided();
+      }
+
+      function cancelKeep() {
+        if (!selected || selected.userData.decision !== 'keep') return;
+        selected.userData.decision = null;
+        if (selected.userData.keepDecoration) selected.userData.keepDecoration.visible = false;
+        selected.userData.body.material.emissive.setHex(0x000000);
+        selected.userData.body.material.emissiveIntensity = 1;
+        updateSheet();
+        checkAllDecided();
+      }
+
+      keepButton.addEventListener('click', markKeep);
+      destroyButton.addEventListener('click', () => {
+        if (!selected || selected.userData.destroyed) return;
+        if (selected.userData.decision === 'keep') cancelKeep();
+        destroyArmed = true;
+        updateSheet();
+      });
+      cancelKeepButton.addEventListener('click', cancelKeep);
 
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2();
@@ -512,9 +704,39 @@
         requestAnimationFrame(step);
       }
 
+      function checkAllDecided() {
+        if (celebrationShown) return;
+        const contractedBuildings = buildings.filter(building => building.userData.sub.contracted);
+        const complete = contractedBuildings.every(building => building.userData.decision === 'keep' || building.userData.decision === 'destroyed');
+        if (!complete) {
+          clearTimeout(celebrationTimer);
+          celebrationTimer = null;
+          return;
+        }
+        if (celebrationTimer) return;
+        sheet.classList.remove('visible');
+        celebrationTimer = setTimeout(() => {
+          celebrationTimer = null;
+          const stillComplete = contractedBuildings.every(building => building.userData.decision === 'keep' || building.userData.decision === 'destroyed');
+          if (!stillComplete) return;
+          celebrationShown = true;
+          sprouts.forEach((sprout, index) => { sprout.target = 1.55 + index * .07; });
+          createTreeCoinParty();
+          celebrationSaving.textContent = `月々 ${formatYen(savedMonthly)} の節約`;
+          celebrationAnnual.textContent = savedMonthly > 0
+            ? `年間 ${formatYen(savedMonthly * 12)} が、あなたの未来に育ちます。`
+            : '育てたいものを、すべて選びました。';
+          playSound('jajean1');
+          celebration.classList.add('visible');
+          setTimeout(() => playSound('shine2', .9), 420);
+        }, 1250);
+      }
+
       function demolish(building) {
-        if (!building || building.userData.destroyed) return;
+        if (!building || building.userData.destroyed || !destroyArmed) return;
         building.userData.destroyed = true;
+        building.userData.decision = 'destroyed';
+        destroyArmed = false;
         createExplosion(building);
         cameraShake = 1;
         playSound('big-explosion1');
@@ -527,24 +749,18 @@
         animateSavings(building.userData.sub.price);
         destroyedCount += 1;
         selected = null;
+        updateDuplicateBadges();
+        updateContractHeader();
         setTimeout(() => playSound('money-drop1', .9), 270);
         setTimeout(() => playSound('amount-display1', .78), 680);
-        if (destroyedCount === subscriptions.length) {
-          setTimeout(() => {
-            sprouts.forEach((sprout, index) => { sprout.target = 1.55 + index * .07; });
-            createTreeCoinParty();
-            playSound('jajean1');
-            celebration.classList.add('visible');
-            setTimeout(() => playSound('shine2', .9), 420);
-          }, 1250);
-        }
+        checkAllDecided();
       }
 
       function triggerHit() {
         const now = performance.now();
         if (now - lastHitAt < 500) return;
         lastHitAt = now;
-        if (selected && !selected.userData.destroyed) demolish(selected);
+        if (selected && !selected.userData.destroyed && destroyArmed) demolish(selected);
       }
 
       function handleMotion(event) {
@@ -602,6 +818,15 @@
             building.position.x = building.userData.baseX;
             building.rotation.z = 0;
           }
+          const badge = building.userData.duplicateBadge;
+          if (badge && badge.visible) badge.position.y = badge.userData.baseY + Math.sin(time * 3.2 + building.userData.index) * .12;
+          const keepDecoration = building.userData.keepDecoration;
+          if (keepDecoration && keepDecoration.visible) {
+            const keepAge = Math.min(1, (performance.now() - keepDecoration.userData.born) / 560);
+            const keepBounce = 1 + Math.sin(keepAge * Math.PI * 3) * (1 - keepAge) * .2;
+            keepDecoration.scale.setScalar(Math.max(.01, keepAge * keepBounce));
+            keepDecoration.rotation.y = time * .35;
+          }
         });
         for (let i = particles.length - 1; i >= 0; i -= 1) {
           const particle = particles[i];
@@ -645,13 +870,13 @@
         });
         if (cameraShake > .01) {
           camera.position.x = (Math.random() - .5) * cameraShake;
-          camera.position.y = 10.3 + (Math.random() - .5) * cameraShake;
+          camera.position.y = 14.2 + (Math.random() - .5) * cameraShake;
           cameraShake *= .82;
         } else {
           camera.position.x += (0 - camera.position.x) * .1;
-          camera.position.y += (10.3 - camera.position.y) * .1;
+          camera.position.y += (14.2 - camera.position.y) * .1;
         }
-        camera.lookAt(0, 3.5, 0);
+        camera.lookAt(0, 2.4, 0);
         // 0幅で初期化された場合(非表示タブ読込等)の自己修復
         if (renderer.domElement.width === 0 && innerWidth > 0) dispatchEvent(new Event('resize'));
         renderer.render(scene, camera);
@@ -660,7 +885,7 @@
 
       addEventListener('resize', () => {
         camera.aspect = innerWidth / innerHeight;
-        camera.position.z = camera.aspect < .7 ? 28 : 20;
+        camera.position.z = camera.aspect < .7 ? 39 : 29;
         camera.updateProjectionMatrix();
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         renderer.setSize(innerWidth, innerHeight);

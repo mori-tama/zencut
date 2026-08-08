@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZenCut SE試聴</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    background: #14171c;
+    color: #e8e6e0;
+    padding: 16px 12px 48px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 18px; margin-bottom: 4px; }
+  .note { font-size: 12px; color: #8a8f98; margin-bottom: 20px; }
+  h2 {
+    font-size: 13px;
+    color: #d9a441;
+    margin: 22px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #2a2f38;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: #1c2027;
+    margin-bottom: 6px;
+  }
+  .row.playing { background: #2a3441; outline: 1px solid #4a90d9; }
+  button.play {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: #d9a441;
+    color: #14171c;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  button.play:active { transform: scale(0.93); }
+  .meta { flex: 1; min-width: 0; }
+  .name { font-size: 14px; font-weight: 600; }
+  .desc { font-size: 12px; color: #9aa0a8; }
+  .dur { flex: none; font-size: 11px; color: #6d7278; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>ZenCut 効果音 試聴（全26点）</h1>
+<p class="note">タップで再生。もう一度タップで停止。再生中に別の音を押すと切り替わります。</p>
+<div id="list"></div>
+<script>
+const GROUPS = [
+  ["タメ（叩きつけ直前）", [
+    ["earth-tremor1", "地響き ゴゴゴ（実録系・長め）"],
+    ["gogogogo1", "ゴゴゴ…（漫画演出・長め）"],
+  ]],
+  ["爆発", [
+    ["big-explosion1", "大爆発（本命）"],
+    ["big-explosion2", "大爆発2（短め）"],
+    ["bomb1", "中規模の爆発"],
+    ["doon1", "ドーン（初期7点）"],
+  ]],
+  ["倒壊・瓦礫", [
+    ["building-collapse1", "ビル崩落（大・長め）"],
+    ["building-collapse-little1", "小さめの倒壊（低額サブスク向け）"],
+    ["wall-destruction1", "壁破壊"],
+    ["smoke1", "煙もくもく（爆発後の余韻）"],
+  ]],
+  ["跡地で育つ", [
+    ["nyu1", "にゅっ（芽が出る）"],
+    ["nyu3", "にゅっ3（バリエーション）"],
+    ["extend1", "ぐんぐん伸びる（毎月ビルが伸びる音にも）"],
+    ["kira2", "キラーン"],
+    ["shine2", "キラキラ（長め・節約額表示に）"],
+  ]],
+  ["お金・達成（初期7点）", [
+    ["money1", "チャリン"],
+    ["money-drop1", "チャリン（落下）"],
+    ["amount-display1", "金額表示"],
+    ["levelup1", "レベルアップ"],
+    ["item-get1", "アイテム獲得"],
+  ]],
+  ["UI・ステージ演出", [
+    ["hyun1", "ヒュン（ビル選択）"],
+    ["jajean1", "ジャジャーン"],
+    ["drum-roll1", "ドラムロール"],
+    ["roll-finish1", "ロール終わりのシンバル"],
+    ["drum-japanese1", "和太鼓（初期7点）"],
+    ["koto-glissando1", "琴グリッサンド（初期7点）"],
+  ]],
+];
+
+const list = document.getElementById("list");
+let current = null;   // { audio, row }
+
+function stopCurrent() {
+  if (!current) return;
+  current.audio.pause();
+  current.audio.currentTime = 0;
+  current.row.classList.remove("playing");
+  current.row.querySelector("button").textContent = "▶";
+  current = null;
+}
+
+for (const [title, items] of GROUPS) {
+  const h = document.createElement("h2");
+  h.textContent = title;
+  list.appendChild(h);
+  for (const [file, desc] of items) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML =
+      '<button class="play">▶</button>' +
+      '<div class="meta"><div class="name">' + file + '</div>' +
+      '<div class="desc">' + desc + '</div></div>' +
+      '<div class="dur"></div>';
+    const btn = row.querySelector("button");
+    const dur = row.querySelector(".dur");
+    const audio = new Audio("se/" + file + ".mp3");
+    audio.preload = "metadata";
+    audio.addEventListener("loadedmetadata", () => {
+      dur.textContent = audio.duration.toFixed(1) + "s";
+    });
+    audio.addEventListener("error", () => { dur.textContent = "読込エラー"; });
+    audio.addEventListener("ended", () => {
+      if (current && current.audio === audio) stopCurrent();
+    });
+    btn.addEventListener("click", () => {
+      if (current && current.audio === audio) { stopCurrent(); return; }
+      stopCurrent();
+      audio.play();
+      row.classList.add("playing");
+      btn.textContent = "■";
+      current = { audio, row };
+    });
+    list.appendChild(row);
+  }
+}
+</script>
+</body>
+</html>
