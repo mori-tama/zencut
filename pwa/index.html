@@ -1000,6 +1000,8 @@
       carBodyIM.castShadow = false; carBodyIM.receiveShadow = false;
       carTopIM.castShadow = false; carTopIM.receiveShadow = false;
       scene.add(carBodyIM); scene.add(carTopIM);
+      // 球体化で車が道路から浮くため非表示(まるいも裁定 8/8)
+      carBodyIM.visible = false; carTopIM.visible = false;
       const cars = [
         { axis: 'x', lane: -3, phase: 1.2, speed: 2.4, direction: 1, color: 0xf2756b },
         { axis: 'x', lane: 3, phase: 16.4, speed: 2.1, direction: -1, color: 0x7ac9ea },
@@ -2487,7 +2489,7 @@
             particles.splice(i, 1);
           }
         }
-        updateCars(time);
+        // updateCars(time); 車は非表示のため更新も停止
         if (treeVisible) {
           const treeAge = Math.min(1, (performance.now() - treeGrowthStarted) / 620);
           const treeBounce = 1 + Math.sin(treeAge * Math.PI * 3) * (1 - treeAge) * .2;
