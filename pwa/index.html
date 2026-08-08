@@ -524,8 +524,13 @@
       });
 
       initializeStartupData();
-      // 碁盤の目に見えないよう、ビル位置を少しランダムにずらす(モック/スキャンどちらの配置にも適用)
+      // ビル大型化に合わせて街区内の間隔を広げ、碁盤の目に見えないようランダムにもずらす
       subscriptions.forEach(sub => {
+        const home = districts.find(district => district.genre === getDistrictGenre(sub));
+        if (home) {
+          sub.position[0] = home.center[0] + (sub.position[0] - home.center[0]) * 1.3;
+          sub.position[1] = home.center[1] + (sub.position[1] - home.center[1]) * 1.3;
+        }
         sub.position[0] += (Math.random() - .5) * .56;
         sub.position[1] += (Math.random() - .5) * .56;
       });
@@ -1082,6 +1087,7 @@
       }
 
       // ---- ビルのデザインシステム ----
+      const BUILDING_SCALE = 1.35; // ビル全体の大きさ倍率
       // 窓はメッシュを並べず、壁面テクスチャに焼き込んで4面すべてに表示する
       function seededRand(seed) {
         let state = (seed * 2654435761 + 104729) % 2147483647;
@@ -1574,7 +1580,7 @@
         clearOpeningTimers();
         buildings.forEach(building => {
           building.userData.buildBorn = null;
-          building.scale.setScalar(1);
+          building.scale.setScalar(BUILDING_SCALE);
         });
         treeVisible = true;
         savingsTree.scale.setScalar(1);
@@ -2180,7 +2186,7 @@
         const sub = building.userData.sub;
         const origin = new THREE.Vector3();
         building.getWorldPosition(origin);
-        origin.y += building.userData.height * .48;
+        origin.y += building.userData.height * .48 * BUILDING_SCALE;
         const debrisMaterial = new THREE.MeshStandardMaterial({ color: sub.color, roughness: .55, emissive: sub.dark, emissiveIntensity: .18 });
         for (let i = 0; i < 50; i += 1) {
           const size = .16 + Math.random() * .32;
@@ -2212,6 +2218,7 @@
           new THREE.MeshStandardMaterial({ color: 0x242737, roughness: .96, metalness: 0 })
         );
         lot.receiveShadow = true;
+        lot.scale.setScalar(BUILDING_SCALE);
         const sub = building.userData.sub;
         placeOnPlanet(lot, sub.position[0], sub.position[1], .04);
       }
@@ -2373,7 +2380,7 @@
           if (building.userData.buildBorn != null) {
             const buildAge = Math.min(1, (performance.now() - building.userData.buildBorn) / 340);
             const buildBounce = 1 + Math.sin(buildAge * Math.PI * 2.5) * (1 - buildAge) * .18;
-            building.scale.setScalar(Math.max(.01, buildAge * buildBounce));
+            building.scale.setScalar(Math.max(.01, buildAge * buildBounce) * BUILDING_SCALE);
             if (buildAge === 1) building.userData.buildBorn = null;
           }
           if (building === selected && !building.userData.destroyed) {
