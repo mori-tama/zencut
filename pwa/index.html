@@ -398,6 +398,8 @@
       let subscriptions = mockSubscriptions;
       let scanMode = false;
       let scanSubscriptionCount = mockSubscriptions.filter(sub => sub.contracted).length;
+      let scanAnnouncementSubs = null;
+      const mockMode = /(?:^|[?&])mock=1(?:&|$)/.test(location.search);
 
       function scanDistrictGenre(genre) {
         return knownGenres.has(genre) ? genre : 'そのほか';
@@ -425,7 +427,6 @@
 
       function readScanData() {
         try {
-          if (/(?:^|[?&])mock=1(?:&|$)/.test(location.search)) return null;
           const raw = localStorage.getItem('zencut-scan');
           if (raw == null) return null;
           const parsed = JSON.parse(raw);
@@ -492,7 +493,9 @@
 
       function initializeStartupData() {
         try {
-          applyScanData(readScanData());
+          const scanSubs = readScanData();
+          scanAnnouncementSubs = scanSubs;
+          if (!mockMode) applyScanData(scanSubs);
         } catch (error) {
           console.warn('スキャンデータの適用に失敗したためモックデータで起動します', error);
           subscriptions = mockSubscriptions;
@@ -1627,7 +1630,9 @@
         openingRunning = true;
         opening.classList.remove('building');
         opening.classList.add('visible');
-        scanMessage.textContent = scanMode ? 'スキャン済みデータから街を再建中…' : '📩 Gmailをスキャン中…';
+        scanMessage.textContent = scanAnnouncementSubs
+          ? '📩 あなたのGmailのスキャン結果を読み込み中…'
+          : scanMode ? 'スキャン済みデータから街を再建中…' : '📩 Gmailをスキャン中…';
         mailCount.textContent = '0';
         mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '請求メールを確認しています';
         scheduleOpening(() => {
@@ -1643,11 +1648,22 @@
           }, 45);
         }, 250);
         scheduleOpening(() => {
-          scanMessage.textContent = scanMode
-            ? 'スキャン済みデータから街を再建中…'
-            : `契約中サブスク ${subscriptions.filter(sub => sub.contracted).length}本 発見`;
-          mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '同じジャンルの重複も見つかりました';
+          if (scanAnnouncementSubs) {
+            const total = scanAnnouncementSubs.reduce((sum, sub) => {
+              const price = Number(sub.price);
+              return sum + (Number.isFinite(price) ? price : 0);
+            }, 0);
+            scanMessage.textContent = `契約サブスク ${scanAnnouncementSubs.length}本・月額合計 ${formatYen(total)} を検出`;
+          } else {
+            scanMessage.textContent = scanMode
+              ? 'スキャン済みデータから街を再建中…'
+              : `契約中サブスク ${subscriptions.filter(sub => sub.contracted).length}本 発見`;
+            mailLabel.textContent = scanMode ? '保存済みのサービスを街に並べています' : '同じジャンルの重複も見つかりました';
+          }
         }, 1750);
+        if (scanAnnouncementSubs) scheduleOpening(() => {
+          scanMessage.textContent = 'デモの街で再現します';
+        }, 2200);
         scheduleOpening(beginCityBuild, 2450);
       }
 
